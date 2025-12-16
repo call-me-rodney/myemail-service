@@ -1,0 +1,4 @@
+- Polish email DTOs
+- Polish CRUD logic
+- Polish email service
+- Setup local postgres test database

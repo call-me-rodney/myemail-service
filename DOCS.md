@@ -88,8 +88,7 @@ A client chooses the compose option on their dashboards which will prompt a pop 
     "updated_at":"datetime",
     "deleted_at":"datetime",
     "priority":["low","meduim","high"],
-    "tags":["read","unread","draft","trash","sent"],
-    "status":["draft","scheduled","queued","sending","sent","failed"],
+    "status":["draft","scheduled","queued","failed","unread","trash","sent","bounced"],
     "sent_at":"datetime",
     "scheduled_for":"datetime"
 }
