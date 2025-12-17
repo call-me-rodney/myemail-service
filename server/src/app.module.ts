@@ -1,14 +1,13 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EmailModule } from './email/email.module';
 import { AuthModule } from './auth/auth.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { UsersModule } from './users/users.module';
 import { ContactsModule } from './contacts/contacts.module';
-import { AnalyticsModule } from './analytics/analytics.module';
-import { Email } from './email/email.model';
 import configuration from './config/configuration';
 
 @Module({
@@ -23,14 +22,21 @@ import configuration from './config/configuration';
       load: [configuration],
       cache: true,
     }), 
-    SequelizeModule.forRoot({
-      dialect: 'postgres',
-      host: configuration.database.host,
-      port: configuration.database.port,
-      username: configuration.database.username,
-      password: configuration.database.password,
-      database: configuration.database.database,
-      models: [Email],}),
+    SequelizeModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        dialect: 'postgres',
+        host: configService.get('database.host'),
+        port: configService.get('database.port'),
+        username: configService.get('database.username'),
+        password: configService.get('database.password'),
+        database: configService.get('database.database'),
+        models: [],
+        autoLoadModels: true,
+        synchronize: true,
+      }),
+      inject: [ConfigService],
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],
