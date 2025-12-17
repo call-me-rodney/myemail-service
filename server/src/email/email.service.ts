@@ -1,9 +1,8 @@
-
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Email } from './email.model';
-import { CreateEmailDto } from './dto/create-emails.dto';
-import { UpdateEmailDto } from './dto/update-emails.dto';
+import { Email } from './models/email.model';
+import { CreateEmailDto } from './dto/create-email.dto';
+import { UpdateEmailDto } from './dto/update-email.dto';
 
 @Injectable()
 export class EmailService {
@@ -12,12 +11,12 @@ export class EmailService {
     private emailModel: typeof Email,
   ) {}
 
-  // Create a new email
-  async create(createEmailDto: any): Promise<Email> {
-    return this.emailModel.create(createEmailDto);
+  // create new email record
+  async create(createEmailDto: CreateEmailDto): Promise<Email> {
+    return this.emailModel.create(createEmailDto as any);
   }
 
-  // admin route for fetching all emails
+  // fetch all records for the admin
   async findAll(): Promise<Email[]> {
     return this.emailModel.findAll();
   }
@@ -29,26 +28,39 @@ export class EmailService {
         user_id,
       },
     });
-  }
+  }  
 
-  // Fetch a single email by ID
-  findOne(id: string): Promise<Email> {
-    return this.emailModel.findOne({
+  //fetch a single email record for a client
+  async findOne(id: string): Promise<Email> {
+    const email = await this.emailModel.findOne({
       where: {
         id,
       },
     });
+    if (!email) {
+      throw new Error('Email not found');
+    }
+    return email;
   }
 
-  // Update an email by ID
-  async update(id: string, updateEmailDto: any): Promise<Email> {
-    const email = await this.findOne(id);
-    return email.update(updateEmailDto);
+  //update single email record or client
+  async update(id: string, updateEmailDto: UpdateEmailDto): Promise<Email> {
+    const email = await this.emailModel.findOne({
+      where: {
+        id,
+      },
+    });
+    if (email) {
+      await email.update(updateEmailDto as any);
+      return email;
+    }
+    throw new Error('Email not found');
   }
 
-  // Delete an email by ID
-  async remove(id: string): Promise<void> {
+  //delete single email record for client
+  async remove(id: string): Promise<string> {
     const email = await this.findOne(id);
     await email.destroy();
+    return `This action removes a #${id} email`;
   }
 }

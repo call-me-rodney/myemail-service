@@ -1,46 +1,30 @@
+import { Column, Model, Table, PrimaryKey, CreatedAt, UpdatedAt, DeletedAt, AllowNull } from 'sequelize-typescript';
+import { Priority, Status } from '../types/enums';
 
-import type { UUID } from 'crypto';
-import { Column, Model, Table } from 'sequelize-typescript';
 
-enum Priority {
-    Low = "low",
-    Normal = "normal",
-    High = "high"
-}
-
-enum Status {
-    Draft = "draft",
-    Scheduled = "scheduled",
-    Queued = "queued",
-    Sent = "sent",
-    Failed = "failed",
-    Pending = "pending",
-    Unread = "unread",
-    Read = "read",
-    Bounced = "bounced",
-    Trash = "trash"
-}
-
-@Table
+@Table({tableName: 'emails'})
 export class Email extends Model {
+  @PrimaryKey
   @Column
-  declare id: UUID;
+  declare id: string;
 
+  //foreign key to users table
   @Column
   user_id: string;
 
   @Column
-  from_email: Email;
+  from_email: string;
 
   @Column
   from_name: string;
 
   @Column
-  to_email: Email;
+  to_email: string;
 
   @Column
   subject: string;
 
+  //foreign key to conversations table
   @Column
   conversation_id: string;
 
@@ -56,18 +40,25 @@ export class Email extends Model {
   @Column({defaultValue: "draft"})
   status: Status;
 
+  @CreatedAt
   @Column({defaultValue: new Date()})
   created_at: Date;
 
+  @UpdatedAt
+  @AllowNull
   @Column
   updated_at: Date;
 
+  @DeletedAt
+  @AllowNull
   @Column
   deleted_at: Date;
 
+  @AllowNull
   @Column
   sent_at: Date;
 
+  @AllowNull
   @Column
   scheduled_for: Date;
 
