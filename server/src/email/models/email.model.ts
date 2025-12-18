@@ -61,7 +61,4 @@ export class Email extends Model {
   @AllowNull
   @Column
   scheduled_for: Date;
-
-  @Column({ defaultValue: true })
-  isActive: boolean;
 }
