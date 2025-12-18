@@ -1,11 +1,11 @@
-import { Column, Model, Table, PrimaryKey, CreatedAt, UpdatedAt, DeletedAt, AllowNull } from 'sequelize-typescript';
+import { Column, Model, Table, PrimaryKey, CreatedAt, UpdatedAt, DeletedAt, AllowNull, DataType } from 'sequelize-typescript';
 import { Priority, Status } from '../types/enums.types';
 
 
 @Table({tableName: 'emails'})
 export class Email extends Model {
   @PrimaryKey
-  @Column
+  @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4 })
   declare id: string;
 
   //foreign key to users table
