@@ -16,3 +16,16 @@ export enum Status {
   Bounced = "bounced",
   Trash = "trash"
 }
+
+export enum StorageProvider {
+    S3 = "s3",
+    GCS = "gcs",
+    Azure = "azure",
+    Local = "local"
+}
+
+export enum RecipientType {
+    To = "to",
+    Cc = "cc",
+    Bcc = "bcc"
+}
