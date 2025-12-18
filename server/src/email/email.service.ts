@@ -6,10 +6,7 @@ import { UpdateEmailDto } from './dto/update-email.dto';
 
 @Injectable()
 export class EmailService {
-  constructor(
-    @InjectModel(Email)
-    private emailModel: typeof Email,
-  ) {}
+  constructor(@InjectModel(Email) private emailModel: typeof Email) {}
 
   // create new email record
   async create(createEmailDto: CreateEmailDto): Promise<Email> {
@@ -59,8 +56,15 @@ export class EmailService {
 
   //delete single email record for client
   async remove(id: string): Promise<string> {
-    const email = await this.findOne(id);
-    await email.destroy();
-    return `This action removes a #${id} email`;
+    const email = await this.emailModel.findOne({
+      where: {
+        id,
+      },
+    });
+    if (email) {
+      await email.destroy();
+      return `This action removes a #${id} email`;
+    }
+    throw new Error('Email not found');
   }
 }
