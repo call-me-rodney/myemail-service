@@ -1,11 +1,10 @@
-import { Table, Column, AllowNull, PrimaryKey, CreatedAt, UpdatedAt, DeletedAt, Unique, DataType } from "sequelize-typescript";
-import { DataTypes, Model } from "sequelize";
+import { Table, Column, Model, AllowNull, PrimaryKey, CreatedAt, UpdatedAt, DeletedAt, Unique, DataType } from "sequelize-typescript";
 import { Roles } from "../types/enum.types";
 
-@Table({tableName:"users"})
+@Table({tableName:'users'})
 export class User extends Model {
     @PrimaryKey
-    @Column({type: DataType.UUID, defaultValue: DataTypes.UUIDV4})
+    @Column({type: DataType.UUID, defaultValue: DataType.UUIDV4})
     declare id: string;
 
     @Column
