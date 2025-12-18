@@ -1,5 +1,5 @@
 import { Column, Model, Table, PrimaryKey, CreatedAt, UpdatedAt, DeletedAt, AllowNull } from 'sequelize-typescript';
-import { Priority, Status } from '../types/enums';
+import { Priority, Status } from '../types/enums.types';
 
 
 @Table({tableName: 'emails'})
