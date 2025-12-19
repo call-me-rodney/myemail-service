@@ -1,5 +1,9 @@
-import { IsEmail, IsUUID } from "@nestjs/class-validator";
+import { IsEmail, IsUUID, IsOptional, IsEnum, IsArray, ValidateNested, IsString, IsDateString } from "@nestjs/class-validator";
+import { Type } from 'class-transformer';
+//import { Type } from "@nestjs/common";
 import { Priority, Status } from "../types/enums.types";
+import { CreateRecipientDto } from "./create-recipient.dto";
+import { CreateAttachmentDto } from "./create-attachment.dto";
 
 export class CreateEmailDto {
   @IsUUID("4")
@@ -8,19 +12,45 @@ export class CreateEmailDto {
   @IsEmail()
   from_email: string;
 
+  @IsString()
   from_name: string;
 
-  @IsEmail()
-  to_email: string;
-
+  @IsString()
   subject: string;
 
+  @IsOptional()
   @IsUUID("4")
-  conversation_id: string;
+  conversation_id?: string;
 
+  @IsString()
   textcontent: string;
-  htmlcontent: string;
-  priority: Priority;
-  status: Status;
-  created_at: Date;
+
+  @IsOptional()
+  @IsString()
+  htmlcontent?: string;
+
+  @IsOptional()
+  @IsEnum(Priority)
+  priority?: Priority;
+
+  @IsOptional()
+  @IsEnum(Status)
+  status?: Status;
+
+  @IsOptional()
+  @IsDateString()
+  scheduled_for?: Date;
+
+  // Nested recipients (to, cc, bcc)
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateRecipientDto)
+  recipients: CreateRecipientDto[];
+
+  // Optional attachments
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateAttachmentDto)
+  attachments?: CreateAttachmentDto[];
 }
