@@ -1,4 +1,5 @@
-import { Table, Column, Model, PrimaryKey, DataType, AllowNull, CreatedAt, DeletedAt, UpdatedAt } from "sequelize-typescript";
+import { Table, Column, Model, PrimaryKey, DataType, AllowNull, CreatedAt, DeletedAt, UpdatedAt, BelongsTo, ForeignKey } from "sequelize-typescript";
+import { User } from "src/users/models/user.model";
 import { Tags } from "../types/enum.types";
 
 @Table({ tableName: 'contacts' })
@@ -8,6 +9,7 @@ export class Contact extends Model {
   declare id: string;
 
   // foreign key field to users table
+  @ForeignKey(() => User)
   @Column
   user_id: string;
 
@@ -50,4 +52,8 @@ export class Contact extends Model {
   @DeletedAt
   @Column
   deleted_at: Date;
+
+  // associations
+  @BelongsTo(() => User,'user_id')
+  user: User;
 }

@@ -1,4 +1,6 @@
-import { Column, Model, Table, PrimaryKey, CreatedAt, UpdatedAt, DeletedAt, AllowNull, DataType } from 'sequelize-typescript';
+import { Column, Model, Table, PrimaryKey, CreatedAt, UpdatedAt, DeletedAt, AllowNull, DataType, BelongsTo, ForeignKey } from 'sequelize-typescript';
+import { User } from 'src/users/models/user.model';
+import { Conversations } from './conversation.model';
 import { Priority, Status } from '../types/enums.types';
 
 
@@ -9,6 +11,7 @@ export class Email extends Model {
   declare id: string;
 
   //foreign key to users table
+  @ForeignKey(() => User)
   @Column
   user_id: string;
 
@@ -25,6 +28,7 @@ export class Email extends Model {
   subject: string;
 
   //foreign key to conversations table
+  @ForeignKey(() => Conversations)
   @Column
   conversation_id: string;
 
@@ -61,4 +65,11 @@ export class Email extends Model {
   @AllowNull
   @Column
   scheduled_for: Date;
+
+  //associations
+  @BelongsTo(() => User, 'user_id')
+  user: User;
+
+  @BelongsTo(() => Conversations, 'conversation_id')
+  conversation: Conversations;
 }

@@ -1,4 +1,6 @@
-import { Model, Table, Column, PrimaryKey, DataType,  } from "sequelize-typescript";
+import { Model, Table, Column, PrimaryKey, DataType, ForeignKey, HasMany, HasOne} from "sequelize-typescript";
+import { User } from "src/users/models/user.model";
+import { Email } from "./email.model";
 
 @Table({tableName:"email_conversations"})
 export class Conversations extends Model {
@@ -7,14 +9,16 @@ export class Conversations extends Model {
     declare id: string;
 
     //foreign key to user table
+    @ForeignKey(() => User)
     @Column
     user_id: string;
 
     @Column
     subject: string;
 
+    @ForeignKey(() => Email)
     @Column
-    participant_emails: string; // Comma-separated emails
+    participant_emails: string;
 
     @Column({defaultValue: new Date()})
     last_message_at: Date;
@@ -24,4 +28,11 @@ export class Conversations extends Model {
 
     @Column
     created_at: Date;
+
+    //associations
+    @HasOne(() => User, 'user_id')
+    user: User;
+    
+    @HasMany(() => Email, 'conversation_id')
+    emails: Email[];
 }

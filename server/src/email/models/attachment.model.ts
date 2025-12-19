@@ -1,4 +1,5 @@
-import { Model, Table, Column, PrimaryKey, DataType,  } from "sequelize-typescript";
+import { Model, Table, Column, PrimaryKey, DataType, BelongsTo, ForeignKey,  } from "sequelize-typescript";
+import { Email } from "./email.model";
 import { StorageProvider } from "../types/enums.types";
 
 @Table({tableName:"email_attachments"})
@@ -8,6 +9,7 @@ export class Attachments extends Model {
     declare id: string;
 
     //foreignkey field
+    @ForeignKey(() => Email)
     @Column
     email_id: string;
 
@@ -28,4 +30,8 @@ export class Attachments extends Model {
 
     @Column
     uploaded_at: Date;
+
+    //associations
+    @BelongsTo(() => Email,'email_id')
+    email: Email;
 }
