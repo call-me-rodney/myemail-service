@@ -36,4 +36,8 @@ export class EmailController {
   remove(@Param('id') id: string) {
     return this.emailService.remove(id);
   }
+
+  /*post route for sending emails that have been created through email provider
+  makes use of emailService.markAsSent
+  */
 }
