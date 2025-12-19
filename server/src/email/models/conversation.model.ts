@@ -1,4 +1,4 @@
-import { Model, Table, Column, PrimaryKey, DataType, ForeignKey, HasMany, HasOne} from "sequelize-typescript";
+import { Model, Table, Column, PrimaryKey, DataType, ForeignKey, HasMany, BelongsTo, CreatedAt } from "sequelize-typescript";
 import { User } from "src/users/models/user.model";
 import { Email } from "./email.model";
 
@@ -16,23 +16,23 @@ export class Conversations extends Model {
     @Column
     subject: string;
 
-    @ForeignKey(() => Email)
-    @Column
+    @Column({type: DataType.JSONB})
     participant_emails: string;
 
     @Column({defaultValue: new Date()})
     last_message_at: Date;
 
-    @Column
+    @Column({defaultValue: 0})
     message_count: number;
 
+    @CreatedAt
     @Column
     created_at: Date;
 
     //associations
-    @HasOne(() => User, 'user_id')
+    @BelongsTo(() => User)
     user: User;
     
-    @HasMany(() => Email, 'conversation_id')
+    @HasMany(() => Email)
     emails: Email[];
 }

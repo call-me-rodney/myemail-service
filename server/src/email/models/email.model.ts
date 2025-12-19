@@ -1,6 +1,8 @@
-import { Column, Model, Table, PrimaryKey, CreatedAt, UpdatedAt, DeletedAt, AllowNull, DataType, BelongsTo, ForeignKey } from 'sequelize-typescript';
+import { Column, Model, Table, PrimaryKey, CreatedAt, UpdatedAt, DeletedAt, AllowNull, DataType, BelongsTo, ForeignKey, HasMany } from 'sequelize-typescript';
 import { User } from 'src/users/models/user.model';
 import { Conversations } from './conversation.model';
+import { Recipients } from './recipient.model';
+import { Attachments } from './attachment.model';
 import { Priority, Status } from '../types/enums.types';
 
 
@@ -67,9 +69,15 @@ export class Email extends Model {
   scheduled_for: Date;
 
   //associations
-  @BelongsTo(() => User, 'user_id')
+  @BelongsTo(() => User)
   user: User;
 
-  @BelongsTo(() => Conversations, 'conversation_id')
+  @BelongsTo(() => Conversations)
   conversation: Conversations;
+
+  @HasMany(() => Recipients)
+  recipients: Recipients[];
+
+  @HasMany(() => Attachments)
+  attachments: Attachments[];
 }

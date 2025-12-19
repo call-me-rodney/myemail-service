@@ -1,4 +1,4 @@
-import { Model, Table, Column, PrimaryKey, DataType, BelongsTo, ForeignKey,  } from "sequelize-typescript";
+import { Model, Table, Column, PrimaryKey, DataType, BelongsTo, ForeignKey, CreatedAt } from "sequelize-typescript";
 import { Email } from "./email.model";
 import { StorageProvider } from "../types/enums.types";
 
@@ -28,10 +28,11 @@ export class Attachments extends Model {
     @Column
     storage_provider: StorageProvider;
 
+    @CreatedAt
     @Column
     uploaded_at: Date;
 
     //associations
-    @BelongsTo(() => Email,'email_id')
+    @BelongsTo(() => Email)
     email: Email;
 }
