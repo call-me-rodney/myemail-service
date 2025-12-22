@@ -32,6 +32,15 @@ export class UsersService {
     return user.update(updateUserDto)
   }
 
+  async deactivate(id: string): Promise<User> {
+    const user = await this.userModel.findByPk(id);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user.update({ is_active: false });
+  }
+
   async remove(id: string): Promise<string> {
     const user = await this.userModel.findByPk(id);
     if (!user) {

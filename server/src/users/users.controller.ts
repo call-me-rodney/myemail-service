@@ -33,6 +33,15 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
+  /*endpoint used to deactivate a user account if they haven't verified their accounts in
+    a fortnight after signing up or the lastlogin date is over 3 months. In which case an admin has to 
+    reactivate or delete the account
+  */ 
+  @Patch('/deactivate/:id')
+  deactivate(@Param('id') id: string) {
+    return this.usersService.deactivate(id);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
