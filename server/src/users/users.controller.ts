@@ -17,7 +17,7 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
-  //implement filterig logic later
+  //implement filtering logic later
   @Get('filter')
   filter(@Query() query: any) {
     return `This action filters users`;

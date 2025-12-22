@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from './models/user.model';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -13,13 +13,17 @@ export class UsersService {
   }
 
   async findAll(): Promise<User[]> {
-    return this.userModel.findAll();
+    const users = await this.userModel.findAll();
+    if (!users || users.length === 0) {
+      throw new NotFoundException('No users found');
+    }
+    return users;
   }
 
   async findOne(id: string): Promise<User> {
     const user = await this.userModel.findByPk(id);
     if(!user){
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
     return user;
   }
@@ -27,7 +31,7 @@ export class UsersService {
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.userModel.findByPk(id);
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
     return user.update(updateUserDto)
   }
@@ -36,7 +40,7 @@ export class UsersService {
     const user = await this.userModel.findByPk(id);
 
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
     return user.update({ is_active: false });
   }
@@ -44,7 +48,7 @@ export class UsersService {
   async remove(id: string): Promise<string> {
     const user = await this.userModel.findByPk(id);
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
     await user.destroy();
     return `User with id ${id} has been deleted`;
