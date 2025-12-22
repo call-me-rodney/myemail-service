@@ -36,7 +36,7 @@ export class User extends Model {
     dailySendLimit: number;
 
     @CreatedAt
-    @Column
+    @Column({defaultValue: new Date()})
     created_at: Date;
 
     @UpdatedAt
@@ -64,4 +64,8 @@ export class User extends Model {
     @AllowNull
     @Column
     verified_at: Date;
+
+    @AllowNull
+    @Column
+    verified_using: string;
 }
