@@ -1,6 +1,5 @@
 import { IsEmail, IsUUID, IsOptional, IsEnum, IsArray, ValidateNested, IsString, IsDateString } from "@nestjs/class-validator";
 import { Type } from 'class-transformer';
-//import { Type } from "@nestjs/common";
 import { Priority, Status } from "../types/enums.types";
 import { CreateRecipientDto } from "./create-recipient.dto";
 import { CreateAttachmentDto } from "./create-attachment.dto";
@@ -24,10 +23,6 @@ export class CreateEmailDto {
 
   @IsString()
   textcontent: string;
-
-  @IsOptional()
-  @IsString()
-  htmlcontent?: string;
 
   @IsOptional()
   @IsEnum(Priority)

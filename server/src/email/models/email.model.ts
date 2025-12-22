@@ -37,9 +37,6 @@ export class Email extends Model {
   @Column
   textcontent: string;
 
-  @Column
-  htmlcontent: string;
-
   @Column({defaultValue: "low"})
   priority: Priority;
 
