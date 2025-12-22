@@ -52,9 +52,6 @@ export class User extends Model {
     @Column({defaultValue: new Date()})
     lastLogin: Date;
 
-    @Column
-    created_by: string;
-
     @Column({defaultValue: false})
     is_verified: boolean;
 
