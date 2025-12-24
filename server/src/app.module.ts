@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
+import { JwtModule } from '@nestjs/jwt';
 //import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -17,6 +18,11 @@ import { ContactsModule } from './contacts/contacts.module';
     UsersModule, 
     ContactsModule,
     AnalyticsModule,
+    JwtModule.register({
+      global: true,
+      secret: "test_secret_key",
+      signOptions: { expiresIn: '1d' },
+    }),
     SequelizeModule.forRoot({
       dialect: 'postgres',
       host: 'localhost',
