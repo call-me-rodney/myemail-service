@@ -1,4 +1,6 @@
-1. POST - /email/
+## EMAIL ROUTES
+
+### POST - /email/
 #### Request
 ```json
 {
@@ -83,5 +85,63 @@
       "storage_provider": "s3"
     }
   ]
+}
+```
+
+## USER ROUTES
+### POST /user/
+#### Request
+```json
+{
+  "fname": "string",
+  "lname": "string",
+  "email": "string(email)",
+  "dob": "string(Date string)",
+  "password": "string(password)",
+  "phone": "string",
+  "timezone": "string",
+  "role": "string(enum)" // or another value from Roles enum
+}
+```
+
+#### Example
+```json
+{
+  "fname": "John",
+  "lname": "Doe",
+  "email": "john.doe@example.com",
+  "dob": "1990-05-10",
+  "password": "StrongPass123!",
+  "phone": "+1234567890",
+  "timezone": "America/New_York",
+  "role": "admin" // or another value from Roles enum
+}
+```
+
+### PATCH /users/deactivate/:id
+
+## AUTH ROUTES
+
+### POST /auth/register
+#### Request
+```json
+{
+  "fname": "string",
+  "lname": "string",
+  "email": "string(email)",
+  "dob": "string(Date string)",
+  "password": "string(password)",
+  "phone": "string",
+  "timezone": "string",
+  "role": "string(enum)" // or another value from Roles enum
+}
+```
+
+### POST /auth/login
+#### Register
+```json
+{
+  "email":"string(email)",
+  "password":"string"
 }
 ```
