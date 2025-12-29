@@ -14,7 +14,7 @@ export class Email extends Model {
 
   //foreign key to users table
   @ForeignKey(() => User)
-  @Column
+  @Column({type: DataType.UUID})
   user_id: string;
 
   @Column
@@ -31,7 +31,7 @@ export class Email extends Model {
 
   //foreign key to conversations table
   @ForeignKey(() => Conversations)
-  @Column
+  @Column({type: DataType.UUID})
   conversation_id: string;
 
   @Column

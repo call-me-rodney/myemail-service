@@ -10,7 +10,7 @@ export class Conversations extends Model {
 
     //foreign key to user table
     @ForeignKey(() => User)
-    @Column
+    @Column({type: DataType.UUID})
     user_id: string;
 
     @Column

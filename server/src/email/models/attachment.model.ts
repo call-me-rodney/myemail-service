@@ -10,7 +10,7 @@ export class Attachments extends Model {
 
     //foreignkey field
     @ForeignKey(() => Email)
-    @Column
+    @Column({type: DataType.UUID})
     email_id: string;
 
     @Column

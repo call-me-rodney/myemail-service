@@ -10,7 +10,7 @@ export class Contact extends Model {
 
   // foreign key field to users table
   @ForeignKey(() => User)
-  @Column
+  @Column({type: DataType.UUID})
   user_id: string;
 
   @Column

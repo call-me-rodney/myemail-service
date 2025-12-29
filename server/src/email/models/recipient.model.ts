@@ -11,7 +11,7 @@ export class Recipients extends Model {
 
     //foreignkey field
     @ForeignKey(() => Email)
-    @Column
+    @Column({type: DataType.UUID})
     email_id: string;
 
     @Column
@@ -27,7 +27,7 @@ export class Recipients extends Model {
     //foreignkey field
     @AllowNull
     @ForeignKey(() => Contact)
-    @Column
+    @Column({type: DataType.UUID})
     contact_id: string;
 
     //associations
