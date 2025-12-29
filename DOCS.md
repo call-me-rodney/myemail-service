@@ -13,11 +13,11 @@ An enterprise grade emailing service
 ### Core System Functions
 - Single & bulk email sending
 - Mailing list management
+- Enterprise Email template builder with HTML editor for advaanced users (drag and drop for regulars).
 - unsubscribe/bounce handling  
-- GDPR compliance tracking
-- Enterprise Email template builder with HTML editor for adavanced users (drag and drop for regulars).
 - Real-time analytics and metrics, with ability to export reports to a specific format
 - Campaign builder
+- GDPR compliance tracking
 
 ### Proposed Tech Stack
 - Backend: Nestjs
@@ -169,5 +169,119 @@ A client chooses the compose option on their dashboards which will prompt a pop 
     "last_message_at": "datetime",
     "message_count": "integer",
     "created_at": "datetime"
+}
+```
+
+#### Auth Workflow
+1. Registering
+- **Step 1:** User enters their details on the registration form.
+- **Step 2:** User selects verification method of choice
+- **Step 3:** A confirmation email or SMS is sent to the method of choice.
+- **Step 4:** The user if directed to their new mail inbox upon successful registration
+- **Step 5:** Once the user verifies their details, there status as a verified user is set to true. Users that are not verified within a fortnight willhave their accounts revoked (is_active set to false).
+**NOTE:** Once an account has been deactivated, logining into said account is blocked until an admin either sets the account back to active or deletes it upon request. Accounts will automatically be deleted after another 3 months of inactivit without admin intervantion. may have to implement this using a cronjob
+
+2. Login
+- **Step 1:** User enters their details
+- **Step 2:** Details are authenticated
+- **Step 3:** Session token is generated and stored in redis.
+- **Step 4:** User is redirected to their mailing dashboard
+
+### Email template builder
+#### Suggested edits and schemas
+- Edit to email schema
+```typescript
+// ...existing code...
+@Table({tableName: 'emails'})
+export class Email extends Model {
+  // ...existing code...
+
+  @ForeignKey(() => Template)
+  @Column
+  template_id?: string;
+
+  @Column
+  textcontent: string;
+
+  // Remove or make optional
+  @Column({type: DataType.TEXT})
+  @AllowNull
+  htmlcontent?: string; // Only for custom HTML overrides
+
+  // Add for template variables
+  @Column({type: DataType.JSONB})
+  @AllowNull
+  template_variables?: Record<string, any>;
+
+  // ...existing code...
+
+  @BelongsTo(() => Template)
+  template?: Template;
+}
+```
+
+- Template schema
+```typescript
+import { Column, Model, Table, PrimaryKey, DataType, ForeignKey, BelongsTo } from 'sequelize-typescript';
+import { User } from 'src/users/models/user.model';
+
+@Table({tableName: 'templates'})
+export class Template extends Model {
+  @PrimaryKey
+  @Column({ type: DataType.UUID, defaultValue: DataType.UUIDV4 })
+  id: string;
+
+  @ForeignKey(() => User)
+  @Column
+  user_id: string;
+
+  @Column
+  name: string;
+
+  @Column
+  description?: string;
+
+  @Column({type: DataType.TEXT})
+  html_structure: string; // Full HTML with {{placeholders}}
+
+  @Column({type: DataType.TEXT})
+  css_styles?: string;
+
+  @Column({type: DataType.JSONB})
+  placeholders: string[]; // ['message', 'name', 'company_logo']
+
+  @Column
+  thumbnail_url?: string;
+
+  @Column({defaultValue: true})
+  is_active: boolean;
+
+  @BelongsTo(() => User)
+  user: User;
+}
+```
+
+- Update to create email DTO
+```typescript
+// ...existing code...
+export class CreateEmailDto {
+  // ...existing code...
+
+  @IsOptional()
+  @IsUUID("4")
+  template_id?: string;
+
+  @IsString()
+  textcontent: string;
+
+  @IsOptional()
+  @IsString()
+  htmlcontent?: string; // Only for custom HTML (no template)
+
+  @IsOptional()
+  @IsObject()
+  template_variables?: Record<string, any>; // { name: "John", company: "Acme" }
+
+  // ...existing code...
 }
 ```

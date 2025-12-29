@@ -36,24 +36,27 @@ export class AuthService {
   }
 
   async login(loginPayload: LoginPayload): Promise<ResponsePayload> {
-    const user = await this.usersService.findByEmail(loginPayload.email);
+    try {
+      const user = await this.usersService.findByEmail(loginPayload.email);
 
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+      const valid = await bcrypt.compare(loginPayload.password, user.password);
+      if (!valid) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
 
-    const valid = await bcrypt.compare(loginPayload.password, user.password);
-    if (!valid) {
-      throw new UnauthorizedException('Invalid credentials');
+      const token = await this.generatetoken(user);
+      const response: ResponsePayload = {
+        userid: user.id,
+        role: user.role,
+        accessToken: token,
+      }
+      return response;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+      throw error;
     }
-
-    const token = await this.generatetoken(user);
-    const response: ResponsePayload = {
-      userid: user.id,
-      role: user.role,
-      accessToken: token,
-    }
-    return response;
   }
 
   async generatetoken(userData: any): Promise<string> {
