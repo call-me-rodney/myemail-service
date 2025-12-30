@@ -9,11 +9,17 @@ export class ContactsService {
   constructor(@InjectModel(Contact) private contactModel: typeof Contact) {}
   async create(createContactDto: CreateContactDto): Promise<Contact> {
     const contact = await this.contactModel.create(createContactDto as any);
-    return contact;
+    return contact.toJSON();
   }
 
   async findAll(): Promise<Contact[]> {
-    return await this.contactModel.findAll();
+    const contacts = await this.contactModel.findAll();
+
+    if (contacts.length === 0) {
+      throw new NotFoundException('No contacts found');
+    }
+    
+    return contacts.map(contact => contact.toJSON());
   }
 
   async findMultiple(user_id: string): Promise<Contact[]> {
@@ -25,7 +31,7 @@ export class ContactsService {
       throw new NotFoundException('No contacts found for this user');
     }
 
-    return contacts;
+    return contacts.map(contact => contact.toJSON());
   }
 
   async findOne(id: string): Promise<Contact> {
@@ -35,7 +41,7 @@ export class ContactsService {
       throw new NotFoundException('Contact not found');
     }
     
-    return contact;
+    return contact.toJSON();
   }
 
   async update(id: string, updateContactDto: UpdateContactDto): Promise<Contact> {
@@ -48,7 +54,7 @@ export class ContactsService {
     }
 
     await contact.update(updateContactDto);
-    return contact;
+    return contact.toJSON();
   }
 
   async remove(id: string): Promise<string> {
