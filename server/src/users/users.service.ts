@@ -15,7 +15,7 @@ export class UsersService {
       throw new Error('User creation failed');
     }
     
-    return created;
+    return created.toJSON();
   }
 
   async findAll(): Promise<User[]> {
@@ -25,7 +25,7 @@ export class UsersService {
       throw new NotFoundException('No users found');
     }
 
-    return users;
+    return users.map(user => user.toJSON());
   }
 
   async findOne(id: string): Promise<User> {
@@ -35,20 +35,19 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    return user.toJSON();
   }
 
   async findByEmail(email: string): Promise<User> {
     const user = await this.userModel.findOne({ 
       where: { email: email },
-      //raw: true
     });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    return user //as User;
+    return user.toJSON();
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
@@ -77,7 +76,7 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    
+
     await user.destroy();
     return `User with id ${id} has been deleted`;
   }

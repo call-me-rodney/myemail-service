@@ -44,6 +44,8 @@ export class AuthService {
         throw new UnauthorizedException('Invalid credentials');
       }
 
+      await this.usersService.update(user.id, { lastLogin: new Date() } as any);
+
       const token = await this.generatetoken(user);
       const response: ResponsePayload = {
         userid: user.id,
