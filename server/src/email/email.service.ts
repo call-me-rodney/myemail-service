@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Email } from './models/email.model';
@@ -115,26 +115,32 @@ export class EmailService {
         throw new Error('Failed to retrieve created email');
       }
 
-      return completeEmail;
+      return completeEmail.toJSON();
     });
   }
 
   // fetch all records for the admin
   async findAll(): Promise<Email[]> {
-    return this.emailModel.findAll({
+    const emails = await this.emailModel.findAll({
       include: [
         { model: Recipients, as: 'recipients' },
         { model: Attachments, as: 'attachments' },
         { model: Conversations, as: 'conversation' },
       ],
     });
+
+    if (!emails) {
+      throw new NotFoundException('No emails found');
+    }
+
+    return emails.map(email => email.toJSON());
   }
 
   // Fetch multiple emails for a specific user
   async findMultiple(user_id: string): Promise<Email[]> {
-    return this.emailModel.findAll({
+    const emails = await this.emailModel.findAll({
       where: {
-        user_id,
+        user_id:user_id,
       },
       include: [
         { model: Recipients, as: 'recipients' },
@@ -142,11 +148,17 @@ export class EmailService {
         { model: Conversations, as: 'conversation' },
       ],
     });
+
+    if (!emails) {
+      throw new NotFoundException('No emails found for the user');
+    }
+
+    return emails.map(email => email.toJSON());
   }  
 
   // Get emails by conversation ID
   async findByConversation(conversationId: string): Promise<Email[]> {
-    return this.emailModel.findAll({
+    const emails = await this.emailModel.findAll({
       where: {
         conversation_id: conversationId,
       },
@@ -156,14 +168,20 @@ export class EmailService {
       ],
       order: [['created_at', 'ASC']],
     });
+
+    if (!emails || emails.length === 0) {
+      throw new NotFoundException('No emails found for the conversation');
+    }
+
+    return emails.map(email => email.toJSON());
   }
 
   // Get emails by status for a user
   async findByStatus(user_id: string, status: Status): Promise<Email[]> {
-    return this.emailModel.findAll({
+    const emails = await this.emailModel.findAll({
       where: {
-        user_id,
-        status,
+        user_id: user_id,
+        status: status,
       },
       include: [
         { model: Recipients, as: 'recipients' },
@@ -172,13 +190,19 @@ export class EmailService {
       ],
       order: [['created_at', 'DESC']],
     });
+
+    if (!emails || emails.length === 0) {
+      throw new NotFoundException(`No emails found with status: ${status}`);
+    }
+
+    return emails.map(email => email.toJSON());
   }
 
   //fetch a single email record for a client
   async findOne(id: string): Promise<Email> {
     const email = await this.emailModel.findOne({
       where: {
-        id,
+        id: id,
       },
       include: [
         { model: Recipients, as: 'recipients' },
@@ -187,44 +211,45 @@ export class EmailService {
       ],
     });
     if (!email) {
-      throw new Error('Email not found');
+      throw new NotFoundException('Email not found');
     }
-    return email;
+    return email.toJSON();
   }
 
   //update single email record or client
   async update(id: string, updateEmailDto: UpdateEmailDto): Promise<Email> {
     const email = await this.emailModel.findOne({
       where: {
-        id,
+        id: id,
       },
     });
     if (email) {
       await email.update(updateEmailDto as any);
-      return email;
+      return email.toJSON();
     }
-    throw new Error('Email not found');
+    throw new NotFoundException('Email not found');
   }
 
   //delete single email record for client
   async remove(id: string): Promise<string> {
     const email = await this.emailModel.findOne({
       where: {
-        id,
+        id: id,
       },
     });
     if (email) {
       await email.destroy();
       return `This action removes a #${id} email`;
     }
-    throw new Error('Email not found');
+    throw new NotFoundException('Email not found');
   }
 
   // Mark email as sent (to be called after successful sending via email provider)
   async markAsSent(id: string): Promise<Email> {
     const email = await this.emailModel.findByPk(id);
+
     if (!email) {
-      throw new Error('Email not found');
+      throw new NotFoundException('Email not found');
     }
 
     await email.update({
@@ -232,6 +257,6 @@ export class EmailService {
       sent_at: new Date(),
     } as any);
 
-    return this.findOne(id);
+    return email.toJSON();
   }
 }
