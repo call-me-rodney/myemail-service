@@ -1,5 +1,5 @@
 import { Table, Column, Model, AllowNull, PrimaryKey, CreatedAt, UpdatedAt, DeletedAt, Unique, DataType } from "sequelize-typescript";
-import { Roles } from "../types/enum.types";
+import { roles } from "../types/enum.types";
 
 @Table({tableName:'users'})
 export class User extends Model {
@@ -14,7 +14,7 @@ export class User extends Model {
     lname: string;
 
     @Column
-    role: Roles;
+    role: roles;
 
     @Unique
     @Column
