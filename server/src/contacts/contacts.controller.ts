@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { ContactsService } from './contacts.service';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
@@ -14,8 +15,9 @@ export class ContactsController {
 
   @Post()
   @Roles([roles.user, roles.admin])
-  create(@Body() createContactDto: CreateContactDto) {
-    return this.contactsService.create(createContactDto);
+  create(@Req() req: Request, @Body() createContactDto: CreateContactDto) {
+    const userId = (req as any).user?.sub || (req as any).user?.id;
+    return this.contactsService.create({ ...createContactDto, user_id: userId });
   }
 
   @Get()
@@ -24,10 +26,11 @@ export class ContactsController {
     return this.contactsService.findAll();
   }
 
-  @Get('user/:user_id')
+  @Get('user')
   @Roles([roles.user, roles.admin])
-  findMultiple(@Param('user_id') user_id: string) {
-    return this.contactsService.findMultiple(user_id);
+  findMultiple(@Req() req: Request) {
+    const userId = (req as any).user?.sub || (req as any).user?.id;
+    return this.contactsService.findMultiple(userId);
   }
 
   @Get('single/:id')

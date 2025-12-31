@@ -1,17 +1,17 @@
 ## EMAIL ROUTES
 
 ### POST - /email/
+**Note:** `user_id` is automatically extracted from JWT token. Do not include in request body.
+
 #### Request
 ```json
 {
-  "user_id": "string(UUID)",
   "from_email": "string(email)",
   "from_name": "string",
   "subject": "string",
   "textcontent": "string",
-  "htmlcontent": "string",
-  "priority": "string(enum(low,meduim,high))",
-  "status": "string(enum())", // or "sent" for immediate sending
+  "priority": "string(enum(low,normal,high))",
+  "status": "string(enum(draft,scheduled,queued,sent,failed,pending,unread,read,bounced,trash))", // or "sent" for immediate sending
   "scheduled_for": "date string", // optional
   
   // Recipients array - REQUIRED
@@ -52,13 +52,11 @@
 #### Example
 ```json
 {
-  "user_id": "9f4f5f54-7b13-4d6f-9c3c-2b1e9c0e4c11",
   "from_email": "sender@example.com",
   "from_name": "Sender Name",
   "subject": "Quarterly report",
   "conversation_id": "0a7c2f8a-2c3b-4e1f-9e6e-b0f0f1a2b3c4",
   "textcontent": "Hi team, please find the report attached.",
-  "htmlcontent": "<p>Hi team,<br/>Please find the report attached.</p>",
   "priority": "high",
   "status": "queued",
   "scheduled_for": "2025-12-20T10:00:00.000Z",
@@ -87,6 +85,41 @@
   ]
 }
 ```
+
+### GET - /email/user
+Get all emails for the authenticated user (user_id extracted from JWT token).
+
+**Authentication:** Bearer token required
+
+#### Response
+Returns array of email objects with recipients, attachments, and conversation details.
+
+## CONTACT ROUTES
+
+### POST - /contacts/
+**Note:** `user_id` is automatically extracted from JWT token. Do not include in request body.
+
+#### Request
+```json
+{
+  "fname": "string",
+  "lname": "string",
+  "email": "string(email)",
+  "phone": "string",
+  "tags": "string(enum)",
+  "company": "string",
+  "timezone": "string",
+  "address": "string"
+}
+```
+
+### GET - /contacts/user
+Get all contacts for the authenticated user (user_id extracted from JWT token).
+
+**Authentication:** Bearer token required
+
+#### Response
+Returns array of contact objects.
 
 ## USER ROUTES
 ### POST /user/

@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { EmailService } from './email.service';
 import { CreateEmailDto } from './dto/create-email.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
@@ -14,8 +15,9 @@ export class EmailController {
 
   @Post()
   @Roles([roles.user, roles.admin])
-  create(@Body() createEmailDto: CreateEmailDto) {
-    return this.emailService.create(createEmailDto);
+  create(@Req() req: Request, @Body() createEmailDto: CreateEmailDto) {
+    const userId = (req as any).user?.sub || (req as any).user?.id;
+    return this.emailService.create({ ...createEmailDto, user_id: userId });
   }
 
   @Get()
@@ -24,10 +26,11 @@ export class EmailController {
     return this.emailService.findAll();
   }
 
-  @Get('user/:user_id')
+  @Get('user')
   @Roles([roles.user, roles.admin])
-  findMultiple(@Param('user_id') user_id: string) {
-    return this.emailService.findMultiple(user_id);
+  findMultiple(@Req() req: Request) {
+    const userId = (req as any).user?.sub || (req as any).user?.id;
+    return this.emailService.findMultiple(userId);
   }
 
   @Get('single/:id')
