@@ -1,9 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { CreateAnalyticsDto } from './dto/create-analytics.dto';
 import { UpdateAnalyticsDto } from './dto/update-analytics.dto';
+import { AuthGuard } from 'src/guards/auth.guard';
+import { RolesGuard } from 'src/guards/roles.guard';
+import { Roles } from 'src/decorators/roles.decorator';
+import { roles } from 'src/users/types/enum.types';
 
 @Controller('analytics')
+@Roles([roles.admin])
+@UseGuards(AuthGuard, RolesGuard)
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
