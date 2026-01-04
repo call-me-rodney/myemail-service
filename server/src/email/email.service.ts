@@ -8,6 +8,9 @@ import { Conversations } from './models/conversation.model';
 import { CreateEmailDto } from './dto/create-email.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
 import { Status, Priority } from './types/enums.types';
+import { EmailGateway} from './providers/websocket.service';
+import { simpleParser} from 'mailparser';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class EmailService {
@@ -17,6 +20,8 @@ export class EmailService {
     @InjectModel(Attachments) private attachmentsModel: typeof Attachments,
     @InjectModel(Conversations) private conversationsModel: typeof Conversations,
     private sequelize: Sequelize,
+    private emailGateway: EmailGateway,
+    private usersService: UsersService,
   ) {}
 
   // create new email record with recipients, attachments, and conversation
@@ -114,7 +119,9 @@ export class EmailService {
       if (!completeEmail) {
         throw new Error('Failed to retrieve created email');
       }
-
+    
+      // Handle outbound mail if status is pending
+      this.handleOutboundMail(completeEmail);
       return completeEmail.toJSON();
     });
   }
@@ -245,7 +252,7 @@ export class EmailService {
   }
 
   // Mark email as sent (to be called after successful sending via email provider)
-  async markAsSent(id: string): Promise<Email> {
+  async markAsSent(id: string): Promise<void> {
     const email = await this.emailModel.findByPk(id);
 
     if (!email) {
@@ -257,6 +264,60 @@ export class EmailService {
       sent_at: new Date(),
     } as any);
 
-    return email.toJSON();
+    // return email.toJSON();
+  }
+
+  async handleInboundMail(rawEmail: string): Promise<void> {
+    const parsedEmail = await simpleParser(rawEmail);
+
+    // save necessary details to DB
+
+    const toAddress = Array.isArray(parsedEmail.to) 
+      ? parsedEmail.to[0]?.text 
+      : parsedEmail.to?.text;
+    const user = this.usersService.findByEmail(toAddress || '');
+    this.emailGateway.server.to((await user).id).emit('new_mail', parsedEmail);
+  }
+
+  async handleOutboundMail(emailPayload: Email): Promise<void> {
+    // check status of mail
+    if (emailPayload.status === Status.Pending) {
+      // determine whether its multiple recipients or not
+      if (emailPayload.recipients.length > 1) {
+        const internalRecipients = emailPayload.recipients.filter(r => r.recipient_email.includes("brevomail.me"));
+        const externalRecipients = emailPayload.recipients.filter(r => !r.recipient_email.includes("brevomail.me"));
+
+        if (internalRecipients.length > 0) {
+          const userIds = await Promise.all(
+            internalRecipients.map(async r => (await this.usersService.findByEmail(r.recipient_email)).id),
+          );
+          this.emailGateway.sendNewEmailNotificationToMany(
+            userIds,
+            emailPayload.toJSON(),
+          );
+
+          // mark the email record as sent
+          this.markAsSent(emailPayload.id);
+        }
+        if (externalRecipients.length > 0) {
+          // send via smtp relay
+          // mark as sent after status is polled from relay
+        }
+      }else if (emailPayload.recipients.length === 1) {
+        // check whether its bound for internal or external domains
+        if (emailPayload.recipients[0].recipient_email.includes("brevomail.me")) {
+          const user = await this.usersService.findByEmail(emailPayload.recipients[0].recipient_email);
+          this.emailGateway.sendNewEmailNotificationToUser(user.id, emailPayload.toJSON());
+
+          // mark the email record as sent
+          this.markAsSent(emailPayload.id);
+        } else {
+          // send via smtp relay
+          // mark as sent after status is polled from relay
+        }
+      }
+    } else if (emailPayload.status === Status.Draft) {
+      return;
+    }
   }
 }

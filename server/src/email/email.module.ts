@@ -6,10 +6,12 @@ import { Conversations } from './models/conversation.model';
 import { Attachments } from './models/attachment.model';
 import { EmailService } from './email.service';
 import { EmailController } from './email.controller';
+import { EmailGateway } from './providers/websocket.service';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
-  imports: [SequelizeModule.forFeature([Email, Recipients, Conversations, Attachments])],
+  imports: [SequelizeModule.forFeature([Email, Recipients, Conversations, Attachments]), UsersModule],
   controllers: [EmailController],
-  providers: [EmailService],
+  providers: [EmailService,EmailGateway],
 })
 export class EmailModule {}

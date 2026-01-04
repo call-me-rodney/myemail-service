@@ -7,6 +7,7 @@ import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { roles } from 'src/users/types/enum.types';
+import { Status } from './types/enums.types';
 
 @Controller('email')
 @UseGuards(AuthGuard, RolesGuard)
@@ -39,9 +40,15 @@ export class EmailController {
     return this.emailService.findOne(id);
   }
 
+  // Update email - mainly for updating status to 'pending' to trigger sending
   @Patch(':id')
   @Roles([roles.user, roles.admin])
-  update(@Param('id') id: string, @Body() updateEmailDto: UpdateEmailDto) {
+  async update(@Param('id') id: string, @Body() updateEmailDto: UpdateEmailDto) {
+    if (updateEmailDto.status === Status.Pending) {
+      const emailPayload = await this.emailService.findOne(id);
+      this.emailService.handleOutboundMail(emailPayload);
+    }
+
     return this.emailService.update(id, updateEmailDto);
   }
 
@@ -51,7 +58,11 @@ export class EmailController {
     return this.emailService.remove(id);
   }
 
-  /*post route for sending emails that have been created through email provider
+  /*post route for sending emails that have been sent from external email domain
   makes use of emailService.markAsSent
   */
+  @Post('webhooks/inbound')
+  handleInbound(@Body() body: { raw: string }) {
+    return this.emailService.handleInboundMail(body.raw);
+  }
 }
