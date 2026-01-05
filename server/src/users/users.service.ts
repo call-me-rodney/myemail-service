@@ -50,34 +50,38 @@ export class UsersService {
     return user.toJSON();
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    const user = await this.userModel.findByPk(id);
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<string> {
+    const userObj = await this.userModel.findByPk(id);
 
-    if (!user) {
+    if (!userObj) {
       throw new NotFoundException('User not found');
     }
-
-    return user.update(updateUserDto)
+    
+    const user = userObj.toJSON();
+    await userObj.update(updateUserDto)
+    return `The user with ID: ${user.id} has been updated`;
   }
 
-  async deactivate(id: string): Promise<User> {
+  async deactivate(id: string): Promise<string> {
     const user = await this.userModel.findByPk(id);
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    return user.update({ is_active: false });
+    await user.update({ is_active: false });
+    return `The user with ID: ${user.id} has been deactivated`;
   }
 
   async remove(id: string): Promise<string> {
-    const user = await this.userModel.findByPk(id);
+    const userObj = await this.userModel.findByPk(id);
 
-    if (!user) {
+    if (!userObj) {
       throw new NotFoundException('User not found');
     }
 
-    await user.destroy();
-    return `User with id ${id} has been deleted`;
+    const user = userObj.toJSON();
+    await userObj.destroy();
+    return `User with id ${user.id} has been deleted`;
   }
 }
