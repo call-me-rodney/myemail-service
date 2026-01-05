@@ -285,3 +285,21 @@ export class CreateEmailDto {
   // ...existing code...
 }
 ```
+
+### FRONTEND DESIGN
+#### General layout
+- After accessing the frontend url, a login page will greet the client
+- The client can then submit their email and password to gain access to their mail inbox (axios requests to the auth routes)
+- If the user doesn't have an account, then a link will redirect them to the registraton page where they will fill in the necessary details (account verification hasn't been implemented yet so skip this)
+- upon successful login or registration, the user is redirected to their dashboard.
+- Once in the dashboard, the frontend will connect to the backend websocket and retrieve any emails sent during inactivity
+- All of the user's emails will also be fetched from the backend so they can be grouped together by their conversation ids (in order of most recent atop) and those groups will be ordered by the most recent conversations (kind of like gmail)
+- The above is in the inbox tab. Email lists, contact lists and compose windows will share their space with a searchbar at the top of the window, and a navigation pane on the left where the passible navigation items are inbox, drafts, sent, scheduled and followed by a compose buton to call a popup window for composing emails. (for now leave sceduled as blank since i haven't implemented scheduled sends)
+- At the top left corner of the screen is a card that displays the username and email of the currently logged in user
+- At the bottom of the navigation pane, is a logout button
+- Using react, I expect a login page, a registration page, and then the inbox page.
+- The inbox page will have a layout component composed of the navigation pane and top searchbar as they remain visible constantly
+- There will be a mail list component somewhere in the middle of the layout that will be populated by email preview components that will show the subject, from email and send time (almost like gmail).
+- upon clicking this email preview component, the space occupied by the mail list component will now be occupied by a page where the full email is displayed to be read, along with other emails in the conversation thread as the client scrolls down.
+- Use typescript interfaces and enums to ensure data to the backend meets its criteria and structure.
+- Use an api helper file to handle axios API calls through methods that can be called into the required file/component.
