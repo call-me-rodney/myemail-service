@@ -8,10 +8,11 @@ import { EmailService } from './email.service';
 import { EmailController } from './email.controller';
 import { EmailGateway } from './providers/websocket.service';
 import { UsersModule } from 'src/users/users.module';
+import { ResendService } from './providers/resend.service';
 
 @Module({
   imports: [SequelizeModule.forFeature([Email, Recipients, Conversations, Attachments]), UsersModule],
   controllers: [EmailController],
-  providers: [EmailService,EmailGateway],
+  providers: [EmailService,EmailGateway,ResendService],
 })
 export class EmailModule {}

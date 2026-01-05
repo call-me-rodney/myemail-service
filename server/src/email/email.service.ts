@@ -11,6 +11,7 @@ import { Status, Priority } from './types/enums.types';
 import { EmailGateway} from './providers/websocket.service';
 import { simpleParser} from 'mailparser';
 import { UsersService } from 'src/users/users.service';
+import { ResendService } from './providers/resend.service';
 
 @Injectable()
 export class EmailService {
@@ -22,6 +23,7 @@ export class EmailService {
     private sequelize: Sequelize,
     private emailGateway: EmailGateway,
     private usersService: UsersService,
+    private resendService: ResendService,
   ) {}
 
   // create new email record with recipients, attachments, and conversation
@@ -270,12 +272,17 @@ export class EmailService {
   async handleInboundMail(rawEmail: string): Promise<void> {
     const parsedEmail = await simpleParser(rawEmail);
 
-    // save necessary details to DB
-
+    // verify the email specified in the to email field exists in our users table
     const toAddress = Array.isArray(parsedEmail.to) 
       ? parsedEmail.to[0]?.text 
       : parsedEmail.to?.text;
     const user = this.usersService.findByEmail(toAddress || '');
+
+    if (!user) {
+      // throw new NotFoundException('Recipient user not found');
+      return;
+    }
+    // save necessary details to DB and send jsonified email via websocket to client instead of raw email
     this.emailGateway.server.to((await user).id).emit('new_mail', parsedEmail);
   }
 
@@ -296,11 +303,16 @@ export class EmailService {
             emailPayload.toJSON(),
           );
 
-          // mark the email record as sent
           this.markAsSent(emailPayload.id);
         }
         if (externalRecipients.length > 0) {
           // send via smtp relay
+          await this.resendService.sendEmail(
+            externalRecipients.map(r => r.recipient_email).join(', '),
+            emailPayload.subject,
+            emailPayload.textcontent,
+            emailPayload.from_email,
+          );
           // mark as sent after status is polled from relay
         }
       }else if (emailPayload.recipients.length === 1) {
@@ -313,6 +325,12 @@ export class EmailService {
           this.markAsSent(emailPayload.id);
         } else {
           // send via smtp relay
+          await this.resendService.sendEmail(
+            emailPayload.recipients[0].recipient_email,
+            emailPayload.subject,
+            emailPayload.textcontent,
+            emailPayload.from_email,
+          );
           // mark as sent after status is polled from relay
         }
       }
