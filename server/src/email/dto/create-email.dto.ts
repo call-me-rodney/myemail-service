@@ -11,6 +11,7 @@ export class CreateEmailDto {
   @IsEmail()
   from_email: string;
 
+  @IsOptional()
   @IsString()
   from_name: string;
 

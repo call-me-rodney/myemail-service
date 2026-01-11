@@ -8,6 +8,8 @@ import { Conversations } from './models/conversation.model';
 import { CreateEmailDto } from './dto/create-email.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
 import { Status, Priority } from './types/enums.types';
+import { WebhookEvent } from './types/int.types';
+import { Webhook } from 'svix';
 import { EmailGateway} from './providers/websocket.service';
 import { simpleParser} from 'mailparser';
 import { UsersService } from 'src/users/users.service';
@@ -276,14 +278,53 @@ export class EmailService {
     const toAddress = Array.isArray(parsedEmail.to) 
       ? parsedEmail.to[0]?.text 
       : parsedEmail.to?.text;
-    const user = this.usersService.findByEmail(toAddress || '');
+    const userObj = this.usersService.findByEmail(toAddress || '');
 
-    if (!user) {
-      // throw new NotFoundException('Recipient user not found');
-      return;
+    if (!userObj) {
+      throw new NotFoundException('Recipient user not found');
     }
+    const user = (await userObj).toJSON();
+
     // save necessary details to DB and send jsonified email via websocket to client instead of raw email
-    this.emailGateway.server.to((await user).id).emit('new_mail', parsedEmail);
+    const emailsObj = this.emailModel.findAll({
+      where: {
+        user_id: user.id,
+        subject: parsedEmail.subject || '(No Subject)',
+      },
+      order: [['created_at', 'DESC']],
+    });
+    const emails = emailsObj.then(results => results.map(email => email.toJSON()));
+
+    if (emails && (await emails).length === 0) {
+      // create new conversation
+      const newEmail: CreateEmailDto = {
+        user_id: user.id,
+        from_email: parsedEmail.from?.text || '',
+        from_name: parsedEmail.from?.value[0]?.name || '',
+        subject: parsedEmail.subject || '(No Subject)',
+        textcontent: parsedEmail.text || '',
+        status: Status.Pending,
+        priority: Priority.Low,
+        recipients: [],
+        attachments: [],
+      };
+      await this.create(newEmail);
+    } else {
+      const conversationId = emails[0].conversation_id;
+      const newEmail: CreateEmailDto = {
+        user_id: user.id,
+        from_email: parsedEmail.from?.text || '',
+        from_name: parsedEmail.from?.value[0]?.name || '',
+        subject: parsedEmail.subject || '(No Subject)',
+        textcontent: parsedEmail.text || '',
+        conversation_id: conversationId,
+        status: Status.Pending,
+        priority: Priority.Low,
+        recipients: [],
+        attachments: [],
+      };
+      await this.create(newEmail);
+    }
   }
 
   async handleOutboundMail(emailPayload: Email): Promise<void> {
@@ -313,7 +354,7 @@ export class EmailService {
             emailPayload.textcontent,
             emailPayload.from_email,
           );
-          // mark as sent after status is polled from relay
+          // status of these emails will be picked via webhooks, thus updates shall be made from there
         }
       }else if (emailPayload.recipients.length === 1) {
         // check whether its bound for internal or external domains
@@ -331,11 +372,64 @@ export class EmailService {
             emailPayload.textcontent,
             emailPayload.from_email,
           );
-          // mark as sent after status is polled from relay
+          // status of these emails will be picked via webhooks, thus updates shall be made from there
         }
       }
     } else if (emailPayload.status === Status.Draft) {
       return;
+    }
+  }
+
+  async handleOutboundStatus(headers: any, payload: any): Promise<void | string> {
+    const webhook = new Webhook('whsec_W7e6iv5MoQnLijD38gL6ErJBxgmCl86i');
+    const event = webhook.verify(payload, headers) as WebhookEvent;
+
+    if (event.type === 'email.sent') {
+      // verify the email specified in the to email field exists in our users table
+      const toAddress = event.data.to[0];
+      const userObj = this.usersService.findByEmail(toAddress || '');
+
+      if (!userObj) {
+        throw new NotFoundException('Recipient user not found');
+      }
+      const user = (await userObj).toJSON();
+      const emailsObj = this.emailModel.findAll({
+        where: {
+          user_id: user.id,
+          subject: event.data.subject || '(No Subject)',
+        },
+        order: [['created_at', 'DESC']],
+      });
+      const emails = emailsObj.then(results => results.map(email => email.toJSON()));
+      const latestEmail = (await emails)[0];
+
+      if (latestEmail) {
+        await this.markAsSent(latestEmail.id);
+      }
+      return `Email sent successfully`;
+    } else if (event.type === 'email.failed') {
+      // verify the email specified in the to email field exists in our users table
+      const toAddress = event.data.to[0];
+      const userObj = this.usersService.findByEmail(toAddress || '');
+
+      if (!userObj) {
+        throw new NotFoundException('Recipient user not found');
+      }
+      const user = (await userObj).toJSON();
+      const emailsObj = this.emailModel.findAll({
+        where: {
+          user_id: user.id,
+          subject: event.data.subject || '(No Subject)',
+        },
+        order: [['created_at', 'DESC']],
+      });
+      const emails = emailsObj.then(results => results.map(email => email.toJSON()));
+      const latestEmail = (await emails)[0];
+
+      if (latestEmail) {
+        await this.update(latestEmail.id, { status: Status.Failed } as UpdateEmailDto);
+      }
+      return `Email delivery failed`;
     }
   }
 }
