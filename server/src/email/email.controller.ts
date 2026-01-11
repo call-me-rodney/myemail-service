@@ -58,11 +58,4 @@ export class EmailController {
     return this.emailService.remove(id);
   }
 
-  /*post route for sending emails that have been sent from external email domain
-  makes use of emailService.markAsSent
-  */
-  @Post('webhooks/inbound')
-  handleInbound(@Body() body: { raw: string }) {
-    return this.emailService.handleInboundMail(body.raw);
-  }
 }
