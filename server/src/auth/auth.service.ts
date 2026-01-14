@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import type { LoginPayload } from './types/int.types';
+import type { LoginPayload, OTP, Plaform } from './types/int.types';
 import type { ResponsePayload } from './types/int.types';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { Platform } from './types/enums.types';
 
 @Injectable()
 export class AuthService {
@@ -37,15 +38,22 @@ export class AuthService {
 
   async login(loginPayload: LoginPayload): Promise<ResponsePayload> {
     try {
+      //grab target user's details
       const user = await this.usersService.findByEmail(loginPayload.email);
 
+      // verify password
       const valid = await bcrypt.compare(loginPayload.password, user.password);
       if (!valid) {
         throw new UnauthorizedException('Invalid credentials');
       }
 
+      // check if they are an active member
+      if (user.is_active === false){
+        throw new UnauthorizedException("This user has been suspended due to failure to verify their account. Please contact your admin for further inquiries")
+      }
       await this.usersService.update(user.id, { lastLogin: new Date() } as any);
 
+      // generate and send access token to verified user
       const token = await this.generatetoken(user);
       const response: ResponsePayload = {
         userid: user.id,
@@ -69,5 +77,25 @@ export class AuthService {
     };
     const accessToken = await this.jwtService.signAsync(payload);
     return accessToken;
+  }
+
+  async generateOTP(id: string, platform: Platform): Promise<string> {
+    /* 
+    - generate a one time password that will expire after a day
+    - save that password using the cache module for verification
+    - send verification code via platform of choice
+    */
+    return "OTP successfully generated"
+  }
+
+  async verifyOTP(id: string, otp: OTP): Promise<string> {
+    /*  
+    - fetch the otp for the provided user id if it exists
+    - compare OTP codes
+    - set is_verified to true if verification successful
+    - enable 5 more tries if not successful
+    - beyond this, account will be automatically deactivated
+    */
+    return "Account verification successful"
   }
 }
