@@ -6,7 +6,7 @@ export class ResendService {
     private resend: Resend;
 
     constructor() {
-        this.resend = new Resend(process.env.RESEND_API_KEY);
+        this.resend = new Resend("re_ZH55Hv8C_B41Rvweq1mi632xFHLsnzMhK");
     }
 
     async sendEmail(to: string, subject: string, html: string, from?: string) {
