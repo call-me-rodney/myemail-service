@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { JwtModule } from '@nestjs/jwt';
-//import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EmailModule } from './email/email.module';
@@ -9,7 +9,6 @@ import { AuthModule } from './auth/auth.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { UsersModule } from './users/users.module';
 import { ContactsModule } from './contacts/contacts.module';
-//import configuration from './config/configuration';
 
 @Module({
   imports: [
@@ -23,6 +22,11 @@ import { ContactsModule } from './contacts/contacts.module';
       secret: "test_secret_key",
       signOptions: { expiresIn: '1d' },
     }),
+    ConfigModule.forRoot({ 
+      isGlobal: true,
+      envFilePath: '.env.dev',
+      cache: true,
+    }),
     SequelizeModule.forRoot({
       dialect: 'postgres',
       host: 'localhost',
@@ -34,11 +38,10 @@ import { ContactsModule } from './contacts/contacts.module';
       autoLoadModels: true,
       synchronize: true,
     }),
-    // ConfigModule.forRoot({ 
+    // ConfigModule.forRoot({ for production environment
     //   isGlobal: true,
-    //   load: [configuration],
-    //   cache: true,
-    // }), 
+    //   ignoreEnvFile: true,
+    // }),
     // SequelizeModule.forRootAsync({
     //   imports: [ConfigModule],
     //   useFactory: (configService: ConfigService) => ({

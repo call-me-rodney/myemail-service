@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { ConfigService } from '@nestjs/config';
 import { Sequelize } from 'sequelize-typescript';
 import { Email } from './models/email.model';
 import { Recipients } from './models/recipient.model';
@@ -26,6 +27,7 @@ export class EmailService {
     private emailGateway: EmailGateway,
     private usersService: UsersService,
     private resendService: ResendService,
+    private configService: ConfigService,
   ) {}
 
   // create new email record with recipients, attachments, and conversation
@@ -381,7 +383,8 @@ export class EmailService {
   }
 
   async handleOutboundStatus(headers: any, payload: any): Promise<void | string> {
-    const webhook = new Webhook('whsec_W7e6iv5MoQnLijD38gL6ErJBxgmCl86i');
+    const webhookSecret = this.configService.get<string>('RESEND_WEBHOOK_SECRET');
+    const webhook = new Webhook(webhookSecret || '');
     const event = webhook.verify(payload, headers) as WebhookEvent;
 
     if (event.type === 'email.sent') {

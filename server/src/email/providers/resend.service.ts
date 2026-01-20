@@ -1,16 +1,17 @@
 import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { Resend } from 'resend';
 
 @Injectable()
 export class ResendService {
-    private resend: Resend;
-
-    constructor() {
-        this.resend = new Resend("re_ZH55Hv8C_B41Rvweq1mi632xFHLsnzMhK");
-    }
+    constructor(
+        private configService: ConfigService,
+    ) {}
 
     async sendEmail(to: string, subject: string, html: string, from?: string) {
-        return this.resend.emails.send({
+        const apiKey = this.configService.get<string>('RESEND_API_KEY') || '';
+        const resend = new Resend(apiKey);
+        return resend.emails.send({
             from: from || 'onboarding@resend.dev',
             to,
             subject,

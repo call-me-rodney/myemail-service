@@ -1,21 +1,23 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import type { LoginPayload, OTP, Plaform } from './types/int.types';
+import type { LoginPayload, OTP } from './types/int.types';
 import type { ResponsePayload } from './types/int.types';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
-import { Platform } from './types/enums.types';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   async register(createUserDto: CreateUserDto): Promise<ResponsePayload> {
-    const hashed = await bcrypt.hash(createUserDto.password, 10);
+    const saltRounds = this.configService.get<number>('BCRYPT_SALT_ROUNDS') || 10;
+    const hashed = await bcrypt.hash(createUserDto.password, saltRounds);
     const user = await this.usersService.create({
       ...createUserDto,
       password: hashed,
@@ -79,7 +81,7 @@ export class AuthService {
     return accessToken;
   }
 
-  async generateOTP(id: string, platform: Platform): Promise<string> {
+  async generateOTP(id: string): Promise<string> {
     /* 
     - generate a one time password that will expire after a day
     - save that password using the cache module for verification
