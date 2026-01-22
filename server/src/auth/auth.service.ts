@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+// import { ConfigService } from '@nestjs/config';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import type { LoginPayload, OTP } from './types/int.types';
@@ -12,11 +12,12 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    private configService: ConfigService,
+    // private configService: ConfigService,
   ) {}
 
   async register(createUserDto: CreateUserDto): Promise<ResponsePayload> {
-    const saltRounds = this.configService.get<number>('BCRYPT_SALT_ROUNDS') || 10;
+    // const saltRounds = this.configService.get<number>('BCRYPT_SALT_ROUNDS') || 10;
+    const saltRounds = 10;
     const hashed = await bcrypt.hash(createUserDto.password, saltRounds);
     const user = await this.usersService.create({
       ...createUserDto,
