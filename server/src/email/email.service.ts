@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { ConfigService } from '@nestjs/config';
+// import { ConfigService } from '@nestjs/config';
 import { Sequelize } from 'sequelize-typescript';
 import { Email } from './models/email.model';
 import { Recipients } from './models/recipient.model';
@@ -27,7 +27,7 @@ export class EmailService {
     private emailGateway: EmailGateway,
     private usersService: UsersService,
     private resendService: ResendService,
-    private configService: ConfigService,
+    // private configService: ConfigService,
   ) {}
 
   // create new email record with recipients, attachments, and conversation
@@ -151,6 +151,7 @@ export class EmailService {
 
   // Fetch multiple emails for a specific user
   async findMultiple(user_id: string): Promise<Email[]> {
+    // fetch emails they created
     const emails = await this.emailModel.findAll({
       where: {
         user_id:user_id,
@@ -161,12 +162,32 @@ export class EmailService {
         { model: Conversations, as: 'conversation' },
       ],
     });
+    
+    // fetch emails where the user was a recipient
+    const emailAddress = await this.usersService.findOne(user_id).then(user => user.email);
+    const recipientObj = await this.recipientsModel.findAll({
+      where: {
+        recipient_email: emailAddress,
+      },
+    });
+    const receivedEmailIds = recipientObj.map(r => r.email_id);
+    const receivedEmails = await this.emailModel.findAll({
+      where: {
+        id: receivedEmailIds,
+      },
+      include: [
+        { model: Recipients, as: 'recipients' },
+        { model: Attachments, as: 'attachments' },
+        { model: Conversations, as: 'conversation' },
+      ],
+    });
 
-    if (!emails) {
+    const emailPayload = [...emails, ...receivedEmails];
+    if (!emailPayload || emailPayload.length === 0) {
       throw new NotFoundException('No emails found for the user');
     }
 
-    return emails.map(email => email.toJSON());
+    return emailPayload.map(email => email.toJSON());
   }  
 
   // Get emails by conversation ID
@@ -383,7 +404,8 @@ export class EmailService {
   }
 
   async handleOutboundStatus(headers: any, payload: any): Promise<void | string> {
-    const webhookSecret = this.configService.get<string>('RESEND_WEBHOOK_SECRET');
+    // const webhookSecret = this.configService.get<string>('RESEND_WEBHOOK_SECRET');
+    const webhookSecret = "whsec_W7e6iv5MoQnLijD38gL6ErJBxgmCl86i";
     const webhook = new Webhook(webhookSecret || '');
     const event = webhook.verify(payload, headers) as WebhookEvent;
 
@@ -436,3 +458,4 @@ export class EmailService {
     }
   }
 }
+

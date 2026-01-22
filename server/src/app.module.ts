@@ -9,23 +9,32 @@ import { AuthModule } from './auth/auth.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { UsersModule } from './users/users.module';
 import { ContactsModule } from './contacts/contacts.module';
+import * as path from 'path';
 
 @Module({
   imports: [
-    EmailModule, 
-    AuthModule, 
-    UsersModule, 
-    ContactsModule,
-    AnalyticsModule,
+    // ConfigModule.forRoot({ 
+    //   isGlobal: true,
+    //   envFilePath: path.resolve(process.cwd(),'dev.env'),
+    //   cache: true,
+    // }),
+    // ConfigModule.forRoot({ for production environment
+    //   isGlobal: true,
+    //   ignoreEnvFile: true,
+    // }),
+    // JwtModule.registerAsync({
+    //   imports: [ConfigModule],
+    //   useFactory: (configService: ConfigService) => ({
+    //     global: true,
+    //     secret: configService.get<string>('JWT_SECRET') || 'default',
+    //     signOptions: { expiresIn: configService.get<any>('JWT_EXPIRATION') || '1d'},
+    //   }),
+    //   inject: [ConfigService],
+    // }),
     JwtModule.register({
       global: true,
-      secret: "test_secret_key",
-      signOptions: { expiresIn: '1d' },
-    }),
-    ConfigModule.forRoot({ 
-      isGlobal: true,
-      envFilePath: '.env.dev',
-      cache: true,
+      secret: 'default',
+      signOptions: { expiresIn: '1d'},
     }),
     SequelizeModule.forRoot({
       dialect: 'postgres',
@@ -38,25 +47,26 @@ import { ContactsModule } from './contacts/contacts.module';
       autoLoadModels: true,
       synchronize: true,
     }),
-    // ConfigModule.forRoot({ for production environment
-    //   isGlobal: true,
-    //   ignoreEnvFile: true,
-    // }),
     // SequelizeModule.forRootAsync({
     //   imports: [ConfigModule],
     //   useFactory: (configService: ConfigService) => ({
-    //     dialect: 'postgres',
-    //     host: configService.get('database.host'),
-    //     port: configService.get('database.port'),
-    //     username: configService.get('database.username'),
-    //     password: configService.get('database.password'),
-    //     database: configService.get('database.database'),
+    //     dialect: configService.get('DATABASE_DIALECT'),
+    //     host: configService.get('DATABASE_HOST'),
+    //     port: configService.get('DATABASE_PORT'),
+    //     username: configService.get('DATABASE_USERNAME'),
+    //     password: configService.get('DATABASE_PASSWORD'),
+    //     database: configService.get('DATABASE_NAME'),
     //     models: [],
     //     autoLoadModels: true,
     //     synchronize: true,
     //   }),
     //   inject: [ConfigService],
     // }),
+    EmailModule, 
+    AuthModule, 
+    UsersModule, 
+    ContactsModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
