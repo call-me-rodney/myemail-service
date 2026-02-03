@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 // import { ConfigService } from '@nestjs/config';
 import { Sequelize } from 'sequelize-typescript';
+import { Op } from 'sequelize';
 import { Email } from './models/email.model';
 import { Recipients } from './models/recipient.model';
 import { Attachments } from './models/attachment.model';
@@ -14,6 +15,7 @@ import { Webhook } from 'svix';
 import { EmailGateway} from './providers/websocket.service';
 import { simpleParser} from 'mailparser';
 import { UsersService } from 'src/users/users.service';
+import emailjs, { EmailJSResponseStatus } from '@emailjs/nodejs';
 import { ResendService } from './providers/resend.service';
 
 @Injectable()
@@ -35,6 +37,18 @@ export class EmailService {
     // Use transaction to ensure all records are created atomically
     return this.sequelize.transaction(async (transaction) => {
       const { recipients, attachments, conversation_id, ...emailData } = createEmailDto;
+
+      // Fetch user data to populate from_name if not provided
+      const user = await this.usersService.findOne(createEmailDto.user_id);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      // If from_name is not provided, construct it from user data
+      let fromName = emailData.from_name;
+      if (!fromName || fromName.trim() === '') {
+        fromName = `${user.fname} ${user.lname}`.trim();
+      }
 
       // Step 1: Handle conversation
       let conversationId = conversation_id;
@@ -72,6 +86,7 @@ export class EmailService {
       const email = await this.emailModel.create(
         {
           ...emailData,
+          from_name: fromName,
           conversation_id: conversationId,
           status: emailData.status || Status.Draft,
           priority: emailData.priority || Priority.Low,
@@ -127,7 +142,8 @@ export class EmailService {
       }
     
       // Handle outbound mail if status is pending
-      this.handleOutboundMail(completeEmail);
+      // this.handleOutboundMail(completeEmail);
+      this.handleSingleMail(completeEmail);
       return completeEmail.toJSON();
     });
   }
@@ -151,43 +167,43 @@ export class EmailService {
 
   // Fetch multiple emails for a specific user
   async findMultiple(user_id: string): Promise<Email[]> {
-    // fetch emails they created
+    // Get user's email address for recipient lookup
+    const user = await this.usersService.findOne(user_id);
+    const userEmail = user.email;
+
+    // Find all email IDs where the user is a recipient
+    const recipientRecords = await this.recipientsModel.findAll({
+      where: {
+        recipient_email: userEmail,
+      },
+      attributes: ['email_id'],
+    });
+    const receivedEmailIds = recipientRecords.map(r => r.email_id);
+
+    // Fetch all emails where:
+    // 1. User created the email (user_id matches), OR
+    // 2. User is a recipient (email_id is in receivedEmailIds)
     const emails = await this.emailModel.findAll({
       where: {
-        user_id:user_id,
+        [Op.or]: [
+          { user_id: user_id },
+          { to_email: userEmail },
+          { id: { [Op.in]: receivedEmailIds } },
+        ],
       },
       include: [
         { model: Recipients, as: 'recipients' },
         { model: Attachments, as: 'attachments' },
         { model: Conversations, as: 'conversation' },
       ],
-    });
-    
-    // fetch emails where the user was a recipient
-    const emailAddress = await this.usersService.findOne(user_id).then(user => user.email);
-    const recipientObj = await this.recipientsModel.findAll({
-      where: {
-        recipient_email: emailAddress,
-      },
-    });
-    const receivedEmailIds = recipientObj.map(r => r.email_id);
-    const receivedEmails = await this.emailModel.findAll({
-      where: {
-        id: receivedEmailIds,
-      },
-      include: [
-        { model: Recipients, as: 'recipients' },
-        { model: Attachments, as: 'attachments' },
-        { model: Conversations, as: 'conversation' },
-      ],
+      order: [['created_at', 'DESC']],
     });
 
-    const emailPayload = [...emails, ...receivedEmails];
-    if (!emailPayload || emailPayload.length === 0) {
+    if (!emails || emails.length === 0) {
       throw new NotFoundException('No emails found for the user');
     }
 
-    return emailPayload.map(email => email.toJSON());
+    return emails.map(email => email.toJSON());
   }  
 
   // Get emails by conversation ID
@@ -350,53 +366,108 @@ export class EmailService {
     }
   }
 
+  async handleSingleMail(emailPayload: Email): Promise<void> {
+    await emailPayload.update({sent_at: new Date()});
+    const send_time = emailPayload.sent_at || new Date();
+    emailjs.init({
+      publicKey:'zQXdkPnjzkxtZJ8rW',
+      privateKey:'YruEG3HwAbeEQIJBHVjay',
+    })
+
+    const templateParams = {
+      subject: emailPayload.subject,
+      name: emailPayload.from_name,
+      to: emailPayload.to_email,
+      time: send_time.toDateString(),
+      text: emailPayload.textcontent,
+      from_name: emailPayload.from_name,
+      from_email: emailPayload.from_email,
+    }
+
+    try {
+      await emailjs.send("gmail_service","test_template",templateParams)
+      .then( (response) => {
+        console.log('SUCCESS!', response.status, response.text);
+        this.markAsSent(emailPayload.id);
+      })
+    } catch (err) {
+      if (err instanceof EmailJSResponseStatus) {
+        console.log('Error: ', err);
+        return;
+      }
+    }
+  }
+
   async handleOutboundMail(emailPayload: Email): Promise<void> {
     // check status of mail
     if (emailPayload.status === Status.Pending) {
-      // determine whether its multiple recipients or not
-      if (emailPayload.recipients.length > 1) {
-        const internalRecipients = emailPayload.recipients.filter(r => r.recipient_email.includes("brevomail.me"));
-        const externalRecipients = emailPayload.recipients.filter(r => !r.recipient_email.includes("brevomail.me"));
+      // Collect all recipients: to_email + recipients array
+      interface Recipient {
+        email: string;
+        type: string;
+      }
+      const allRecipients: Recipient[] = [];
 
-        if (internalRecipients.length > 0) {
+      // Add to_email if present
+      if (emailPayload.to_email) {
+        allRecipients.push({
+          email: emailPayload.to_email,
+          type: 'to',
+        });
+      }
+
+      // Add recipients from recipients array (CC/BCC)
+      if (emailPayload.recipients && emailPayload.recipients.length > 0) {
+        emailPayload.recipients.forEach(r => {
+          allRecipients.push({
+            email: r.recipient_email,
+            type: r.recipient_type,
+          });
+        });
+      }
+
+      // If no recipients found, return early
+      if (allRecipients.length === 0) {
+        return;
+      }
+
+      // Separate internal and external recipients
+      const internalRecipients = allRecipients.filter(r => r.email.includes('brevomail.me'));
+      const externalRecipients = allRecipients.filter(r => !r.email.includes('brevomail.me'));
+
+      // Send to internal recipients via WebSocket
+      if (internalRecipients.length > 0) {
+        try {
           const userIds = await Promise.all(
-            internalRecipients.map(async r => (await this.usersService.findByEmail(r.recipient_email)).id),
+            internalRecipients.map(async r => (await this.usersService.findByEmail(r.email)).id),
           );
           this.emailGateway.sendNewEmailNotificationToMany(
             userIds,
             emailPayload.toJSON(),
           );
-
-          this.markAsSent(emailPayload.id);
+        } catch (error) {
+          console.error('Error sending to internal recipients:', error);
         }
-        if (externalRecipients.length > 0) {
-          // send via smtp relay
+      }
+
+      // Send to external recipients via email service
+      if (externalRecipients.length > 0) {
+        try {
           await this.resendService.sendEmail(
-            externalRecipients.map(r => r.recipient_email).join(', '),
+            externalRecipients.map(r => r.email).join(', '),
             emailPayload.subject,
             emailPayload.textcontent,
             emailPayload.from_email,
           );
-          // status of these emails will be picked via webhooks, thus updates shall be made from there
+        } catch (error) {
+          console.error('Error sending to external recipients:', error);
         }
-      }else if (emailPayload.recipients.length === 1) {
-        // check whether its bound for internal or external domains
-        if (emailPayload.recipients[0].recipient_email.includes("brevomail.me")) {
-          const user = await this.usersService.findByEmail(emailPayload.recipients[0].recipient_email);
-          this.emailGateway.sendNewEmailNotificationToUser(user.id, emailPayload.toJSON());
+      }
 
-          // mark the email record as sent
-          this.markAsSent(emailPayload.id);
-        } else {
-          // send via smtp relay
-          await this.resendService.sendEmail(
-            emailPayload.recipients[0].recipient_email,
-            emailPayload.subject,
-            emailPayload.textcontent,
-            emailPayload.from_email,
-          );
-          // status of these emails will be picked via webhooks, thus updates shall be made from there
-        }
+      // Mark as sent only if at least one internal recipient exists
+      // External recipients status will be updated via webhooks
+      if (internalRecipients.length > 0) {
+        this.markAsSent(emailPayload.id);
       }
     } else if (emailPayload.status === Status.Draft) {
       return;

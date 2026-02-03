@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+// import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EmailModule } from './email/email.module';
@@ -9,7 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { UsersModule } from './users/users.module';
 import { ContactsModule } from './contacts/contacts.module';
-import * as path from 'path';
+// import * as path from 'path';
 
 @Module({
   imports: [
@@ -62,9 +62,9 @@ import * as path from 'path';
     //   }),
     //   inject: [ConfigService],
     // }),
-    EmailModule, 
-    AuthModule, 
-    UsersModule, 
+    EmailModule,
+    AuthModule,
+    UsersModule,
     ContactsModule,
     AnalyticsModule,
   ],

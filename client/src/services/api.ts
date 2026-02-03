@@ -1,8 +1,8 @@
 // client/src/services/api.ts
 import axios from 'axios';
-import type { CreateEmailDto, AuthResponse, Email, User } from '../types/interfaces';
+import type { CreateEmailDto, AuthResponse, Email, CreateUserDTO } from '../types/interfaces';
 
-const API_BASE_URL = 'http://localhost:3000'; // Assuming backend runs on port 3000
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -21,20 +21,28 @@ api.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
-export const login = async (credentials: Pick<User, 'email' | 'password'>): Promise<AuthResponse> => {
+export const login = async (credentials: { email: string; password: string }): Promise<AuthResponse> => {
   const response = await api.post<AuthResponse>('/auth/login', credentials);
-  if (response.data.accessToken) {
-    localStorage.setItem('accessToken', response.data.accessToken);
+  const data = response.data;
+  
+  if (data.accessToken) {
+    localStorage.setItem('accessToken', data.accessToken);
+    return data;
   }
-  return response.data;
+  
+  throw new Error('Login failed');
 };
 
-export const register = async (userData: User): Promise<AuthResponse> => {
+export const register = async (userData: CreateUserDTO): Promise<AuthResponse> => {
   const response = await api.post<AuthResponse>('/auth/register', userData);
-  if (response.data.accessToken) {
-    localStorage.setItem('accessToken', response.data.accessToken);
+  const data = response.data;
+  
+  if (data.accessToken) {
+    localStorage.setItem('accessToken', data.accessToken);
+    return data;
   }
-  return response.data;
+  
+  throw new Error('Registration failed');
 };
 
 export const fetchEmails = async (): Promise<Email[]> => {

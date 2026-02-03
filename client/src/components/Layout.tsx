@@ -81,7 +81,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { name, email, logout } = useAuth();
   const navigate = useNavigate();
   const { reloadEmails } = useEmails(); // Destructure reloadEmails from useEmails
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -130,12 +130,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </Toolbar>
       <Divider />
       <List>
-        {user && (
+        {name && email && (
           <ListItem>
             <ListItemIcon>
-              <Avatar>{user.fname[0]}</Avatar>
+              <Avatar>{name.charAt(0).toUpperCase()}</Avatar>
             </ListItemIcon>
-            <ListItemText primary={`${user.fname} ${user.lname}`} secondary={user.email} />
+            <ListItemText primary={name} secondary={email} />
           </ListItem>
         )}
         <Divider sx={{ my: 1 }} />
@@ -212,7 +212,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             />
           </Search>
           <Box sx={{ flexGrow: 1 }} />
-          {user && (
+          {name && (
             <IconButton
               size="large"
               edge="end"
@@ -222,7 +222,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               onClick={handleMenu}
               color="inherit"
             >
-              <Avatar>{user.fname[0]}</Avatar>
+              <Avatar>{name[0]}</Avatar>
             </IconButton>
           )}
           <Menu

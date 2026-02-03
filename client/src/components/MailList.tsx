@@ -37,9 +37,18 @@ const MailList: React.FC = () => {
   }
 
   return (
-    <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)' }}> {/* Adjust height based on AppBar */}
-      <Box sx={{ width: selectedConversation ? '30%' : '100%', overflowY: 'auto', borderRight: selectedConversation ? '1px solid #e0e0e0' : 'none' }}>
-        <List>
+    <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', backgroundColor: '#fafafa' }}>
+      {/* Email List Section */}
+      <Box 
+        sx={{ 
+          width: selectedConversation ? '35%' : '100%', 
+          overflowY: 'auto', 
+          borderRight: selectedConversation ? '1px solid #e0e0e0' : 'none',
+          backgroundColor: 'background.paper',
+          transition: 'width 0.3s ease',
+        }}
+      >
+        <List sx={{ p: 0 }}>
           {conversations.map((conversation) => (
             <React.Fragment key={conversation.id}>
               <EmailPreview
@@ -53,9 +62,21 @@ const MailList: React.FC = () => {
         </List>
       </Box>
 
+      {/* Email Detail Section */}
       {selectedConversation && (
-        <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2 }}>
-          <EmailDetail conversation={selectedConversation} onClose={() => setSelectedConversation(null)} />
+        <Box 
+          sx={{ 
+            flexGrow: 1, 
+            overflowY: 'auto', 
+            backgroundColor: 'background.paper',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <EmailDetail 
+            conversation={selectedConversation} 
+            onClose={() => setSelectedConversation(null)} 
+          />
         </Box>
       )}
     </Box>

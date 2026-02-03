@@ -7,6 +7,8 @@ export interface ResponsePayload {
   userid: string;
   role: string;
   accessToken: string;
+  email: string;
+  name: string; // Full name: fname lname
 }
 
 export interface OTP {

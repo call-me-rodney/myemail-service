@@ -1,15 +1,18 @@
 // client/src/context/AuthContext.tsx
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import type { User, AuthResponse } from '../types/interfaces';
+import type { AuthResponse, CreateUserDTO } from '../types/interfaces';
 import * as api from '../services/api';
 import socketService from '../services/socket';
 
 interface AuthContextType {
-  user: User | null;
+  userid: string | null;
+  role: 'user' | 'admin' | null;
   accessToken: string | null;
-  login: (credentials: Pick<User, 'email' | 'password'>) => Promise<void>;
-  register: (userData: User) => Promise<void>;
+  email: string | null;
+  name: string | null;
+  login: (credentials: { email: string; password: string }) => Promise<void>;
+  register: (userData: CreateUserDTO) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -17,35 +20,45 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [userid, setUserid] = useState<string | null>(null);
+  const [role, setRole] = useState<'user' | 'admin' | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [name, setName] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   // Define logout first so it can be used in useEffect
   const logout = useCallback(() => {
     localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
+    localStorage.removeItem('userid');
+    localStorage.removeItem('role');
+    localStorage.removeItem('email');
+    localStorage.removeItem('name');
     setAccessToken(null);
-    setUser(null);
+    setUserid(null);
+    setRole(null);
+    setEmail(null);
+    setName(null);
     setIsAuthenticated(false);
     socketService.disconnect();
-  }, []); // useCallback to memoize the function
+  }, []);
 
   useEffect(() => {
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem('accessToken');
-      const storedUser = localStorage.getItem('user');
-      if (storedToken && storedUser) {
-        try {
-          const parsedUser: User = JSON.parse(storedUser);
-          setAccessToken(storedToken);
-          setUser(parsedUser);
-          setIsAuthenticated(true);
-          socketService.connect(storedToken);
-        } catch (e) {
-          console.error('Failed to parse stored user data:', e);
-          logout();
-        }
+      const storedUserid = localStorage.getItem('userid');
+      const storedRole = localStorage.getItem('role');
+      const storedEmail = localStorage.getItem('email');
+      const storedName = localStorage.getItem('name');
+      
+      if (storedToken && storedUserid && storedRole) {
+        setAccessToken(storedToken);
+        setUserid(storedUserid);
+        setRole(storedRole as 'user' | 'admin');
+        if (storedEmail) setEmail(storedEmail);
+        if (storedName) setName(storedName);
+        setIsAuthenticated(true);
+        socketService.connect(storedToken);
       }
     };
     initializeAuth();
@@ -57,27 +70,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const handleAuthResponse = useCallback((data: AuthResponse) => {
     localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem('userid', data.userid);
+    localStorage.setItem('role', data.role);
+    localStorage.setItem('email', data.email);
+    localStorage.setItem('name', data.name);
     setAccessToken(data.accessToken);
-    setUser(data.user);
+    setUserid(data.userid);
+    setRole(data.role);
+    setEmail(data.email);
+    setName(data.name);
     setIsAuthenticated(true);
     socketService.connect(data.accessToken);
-  }, []); // useCallback to memoize the function
+  }, []);
 
-  const loginUser = useCallback(async (credentials: Pick<User, 'email' | 'password'>) => {
+  const loginUser = useCallback(async (credentials: { email: string; password: string }) => {
     const data = await api.login(credentials);
     handleAuthResponse(data);
-  }, [handleAuthResponse]); // Add handleAuthResponse to dependency array
+  }, [handleAuthResponse]);
 
-  const registerUser = useCallback(async (userData: User) => {
+  const registerUser = useCallback(async (userData: CreateUserDTO) => {
     const data = await api.register(userData);
     handleAuthResponse(data);
-  }, [handleAuthResponse]); // Add handleAuthResponse to dependency array
+  }, [handleAuthResponse]);
 
 
 
   return (
-    <AuthContext.Provider value={{ user, accessToken, login: loginUser, register: registerUser, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ userid, role, accessToken, email, name, login: loginUser, register: registerUser, logout, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );

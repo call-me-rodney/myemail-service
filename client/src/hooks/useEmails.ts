@@ -23,36 +23,46 @@ const useEmails = () => {
     const conversationsMap = new Map<string, Conversation>();
 
     emails.forEach(email => {
-      const convId = email.conversation_id || email.id; // Use email.id if no conversation_id
+      const convId = email.conversation_id || email.id;
 
+      // Create or get conversation from the nested conversation object
       if (!conversationsMap.has(convId)) {
-        conversationsMap.set(convId, {
-          id: convId,
-          user_id: email.user_id, // Assuming all emails in a conversation belong to the same user
-          subject: email.subject,
-          participants: [], // Will populate later if needed
-          last_message_at: email.created_at,
-          message_count: 0,
-          created_at: email.created_at,
-          emails: [],
-        });
+        if (email.conversation) {
+          // Use backend's conversation object
+          conversationsMap.set(convId, {
+            id: email.conversation.id,
+            user_id: email.conversation.user_id,
+            subject: email.conversation.subject,
+            participant_emails: email.conversation.participant_emails,
+            last_message_at: email.conversation.last_message_at,
+            message_count: email.conversation.message_count,
+            created_at: email.conversation.created_at,
+            updatedAt: email.conversation.updatedAt,
+            emails: [],
+          });
+        } else {
+          // Fallback: create conversation from email data
+          conversationsMap.set(convId, {
+            id: convId,
+            user_id: email.user_id,
+            subject: email.subject,
+            participant_emails: '[]',
+            last_message_at: email.created_at,
+            message_count: 1,
+            created_at: email.created_at,
+            updatedAt: email.updated_at,
+            emails: [],
+          });
+        }
       }
 
       const conversation = conversationsMap.get(convId)!;
       conversation.emails.push(email);
-      conversation.message_count++;
-
-      // Update last_message_at if the current email is newer
-      if (new Date(email.created_at) > new Date(conversation.last_message_at)) {
-        conversation.last_message_at = email.created_at;
-      }
     });
 
     // Sort emails within each conversation by created_at (oldest first for reading)
     conversationsMap.forEach(conv => {
       conv.emails.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-      // For simplicity, participants are not explicitly parsed/populated here,
-      // but in a real app, you'd extract them from recipients across all emails.
     });
 
     // Sort conversations by last_message_at (newest first for display in inbox)

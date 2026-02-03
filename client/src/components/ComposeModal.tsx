@@ -29,6 +29,9 @@ interface ComposeModalProps {
   open: boolean;
   onClose: () => void;
   onSendSuccess: () => void;
+  conversationId?: string; // Optional conversation ID for replies
+  replyToEmail?: string; // Optional email to pre-fill as TO recipient for replies
+  replySubject?: string; // Optional subject for replies
 }
 
 interface RecipientInput {
@@ -37,16 +40,35 @@ interface RecipientInput {
   type: RecipientType;
 }
 
-const ComposeModal: React.FC<ComposeModalProps> = ({ open, onClose, onSendSuccess }) => {
-  const { user } = useAuth();
+const ComposeModal: React.FC<ComposeModalProps> = ({ open, onClose, onSendSuccess, conversationId, replyToEmail, replySubject }) => {
+  const { userid, email } = useAuth();
+  const [fromEmail, setFromEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [textContent, setTextContent] = useState('');
+  const [toEmail, setToEmail] = useState(''); // Direct TO email recipient
   const [priority, setPriority] = useState<EmailPriority>('normal');
   const [recipients, setRecipients] = useState<RecipientInput[]>([]);
   const [currentRecipientEmail, setCurrentRecipientEmail] = useState('');
   const [currentRecipientType, setCurrentRecipientType] = useState<RecipientType>('to');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-fill fromEmail when email is available from auth
+  React.useEffect(() => {
+    if (email && fromEmail === '') {
+      setFromEmail(email);
+    }
+  }, [email, fromEmail]);
+
+  // Pre-fill reply fields if provided
+  React.useEffect(() => {
+    if (open && replyToEmail) {
+      setToEmail(replyToEmail);
+    }
+    if (open && replySubject) {
+      setSubject(replySubject.startsWith('Re:') ? replySubject : `Re: ${replySubject}`);
+    }
+  }, [open, replyToEmail, replySubject]);
 
   const handleAddRecipient = () => {
     if (currentRecipientEmail && !recipients.some(r => r.email === currentRecipientEmail && r.type === currentRecipientType)) {
@@ -60,28 +82,72 @@ const ComposeModal: React.FC<ComposeModalProps> = ({ open, onClose, onSendSucces
   };
 
   const handleSendEmail = async () => {
-    if (!user || !subject || !textContent || recipients.length === 0) {
-      setError('Please fill in all required fields (Subject, Content, and at least one recipient).');
+    // Auto-add current recipient if there's one typed but not added yet
+    if (currentRecipientEmail && currentRecipientEmail.trim() !== '') {
+      const emailToAdd = currentRecipientEmail.trim();
+      if (!recipients.some(r => r.email === emailToAdd && r.type === currentRecipientType)) {
+        setRecipients(prev => [...prev, { email: emailToAdd, name: '', type: currentRecipientType }]);
+        setCurrentRecipientEmail('');
+      }
+    }
+
+    // Detailed validation with specific error messages
+    if (!userid) {
+      setError('User not authenticated. Please login again.');
       return;
+    }
+    if (!fromEmail || fromEmail.trim() === '') {
+      setError('From email is required.');
+      return;
+    }
+    if (!toEmail && recipients.length === 0 && !currentRecipientEmail) {
+      setError('At least one recipient is required.');
+      return;
+    }
+    if (!subject || subject.trim() === '') {
+      setError('Subject is required.');
+      return;
+    }
+    if (!textContent || textContent.trim() === '') {
+      setError('Email body is required.');
+      return;
+    }
+    
+    // Handle recipients:
+    // If toEmail is provided (direct single TO recipient), use it for to_email field
+    // Otherwise collect from recipients array (for CC/BCC)
+    const ccBccRecipients = recipients.filter(r => r.type !== 'to');
+    
+    // Auto-add current recipient if typed but not added yet
+    let finalRecipients = ccBccRecipients;
+    if (currentRecipientEmail && currentRecipientEmail.trim() !== '') {
+      const emailToAdd = currentRecipientEmail.trim();
+      if (currentRecipientType === 'to' && !toEmail) {
+        // If no toEmail set and current is TO type, add to toEmail
+        // This is handled separately below
+      } else {
+        // Add as CC/BCC recipient
+        finalRecipients = [...finalRecipients, { email: emailToAdd, name: '', type: currentRecipientType }];
+      }
     }
 
     setIsSending(true);
     setError(null);
 
+    // Build email data with to_email field for direct recipient
     const emailData: CreateEmailDto = {
-      from_email: user.email,
-      from_name: `${user.fname} ${user.lname}`,
+      from_email: fromEmail.trim(),
       subject,
       textcontent: textContent,
       priority,
-      status: 'queued', // Or 'sent' for immediate
-      recipients: recipients.map(r => ({
+      status: 'queued',
+      to_email: (toEmail || currentRecipientEmail).trim(), // Use toEmail if set, otherwise use currentRecipientEmail if it's a TO type
+      recipients: finalRecipients.map(r => ({
         recipient_email: r.email,
-        recipient_name: r.name, // Can enhance this to allow entering name
+        recipient_name: r.name,
         recipient_type: r.type,
       })),
-      // attachments: [], // Not implemented yet
-      // conversation_id: '', // For replies, not initial compose
+      conversation_id: conversationId, // Include conversation ID for replies
     };
 
     try {
@@ -97,8 +163,10 @@ const ComposeModal: React.FC<ComposeModalProps> = ({ open, onClose, onSendSucces
   };
 
   const handleClose = () => {
+    setFromEmail('');
     setSubject('');
     setTextContent('');
+    setToEmail('');
     setPriority('normal');
     setRecipients([]);
     setCurrentRecipientEmail('');
@@ -133,8 +201,21 @@ const ComposeModal: React.FC<ComposeModalProps> = ({ open, onClose, onSendSucces
             type="email"
             fullWidth
             variant="outlined"
-            value={user ? `${user.fname} ${user.lname} <${user.email}>` : ''}
-            disabled
+            value={fromEmail}
+            onChange={(e) => setFromEmail(e.target.value)}
+            placeholder="your-email@example.com"
+          />
+
+          <TextField
+            margin="dense"
+            label="To"
+            type="email"
+            fullWidth
+            variant="outlined"
+            value={toEmail}
+            onChange={(e) => setToEmail(e.target.value)}
+            placeholder="recipient@example.com"
+            disabled={!!replyToEmail} // Disable if this is a reply
           />
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>

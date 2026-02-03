@@ -1,27 +1,24 @@
 // client/src/types/interfaces.ts
 
-export interface User {
-  id: string;
+// User creation DTO for registration endpoint
+export interface CreateUserDTO {
   fname: string;
   lname: string;
   email: string;
-  dob: string; // Date string
-  phone: string;
   password: string;
-  timezone: string;
-  role: 'user' | 'admin';
-  daily_send_limit: number;
-  created_at: string; // datetime
-  lastLogin: string; // datetime
-  created_by: string; // foreignkey to User
-  is_active: boolean;
-  is_verified: boolean;
-  verified_at: string; // datetime
+  phone: string;
+  dob: string;
+  timezone?: string;
+  role?: 'user' | 'admin';
 }
 
+// Auth response - both login and register return the same format
 export interface AuthResponse {
+  userid: string;
+  role: 'user' | 'admin';
   accessToken: string;
-  user: User;
+  email: string;
+  name: string; // Full name: fname lname
 }
 
 export type EmailPriority = 'low' | 'normal' | 'high';
@@ -36,6 +33,8 @@ export interface Recipient {
   recipient_name?: string;
   recipient_type: RecipientType;
   contact_id?: string;
+  createdAt?: string;  // Backend uses camelCase
+  updatedAt?: string;  // Backend uses camelCase
 }
 
 export interface Attachment {
@@ -47,6 +46,18 @@ export interface Attachment {
   storage_url: string;
   storage_provider: StorageProvider;
   uploaded_at?: string;
+}
+
+// Nested conversation object returned within Email
+export interface ConversationObject {
+  id: string;
+  user_id: string;
+  subject: string;
+  participant_emails: string; // JSON string, e.g. "[\"email@example.com\"]"
+  last_message_at: string; // datetime
+  message_count: number;
+  created_at: string; // datetime
+  updatedAt: string; // Backend uses camelCase
 }
 
 export interface Email {
@@ -68,11 +79,13 @@ export interface Email {
   scheduled_for?: string;
   recipients?: Recipient[]; // Optional, will be populated on fetch
   attachments?: Attachment[]; // Optional, will be populated on fetch
+  conversation?: ConversationObject; // Nested conversation from backend
 }
 
 export interface CreateEmailDto {
   from_email: string;
-  from_name: string;
+  from_name?: string;
+  to_email?: string; // Direct recipient email (instead of using recipients for single TO)
   subject: string;
   textcontent: string;
   priority: EmailPriority;
@@ -107,14 +120,25 @@ export interface Contact {
   address: string;
 }
 
+// Grouped conversation data structure used by the frontend
 export interface Conversation {
   id: string;
   user_id: string;
   subject: string;
-  participants: string[]; // Assuming an array of participant identifiers (e.g., emails)
+  participant_emails: string; // JSON string from backend
   last_message_at: string; // datetime
   message_count: number;
   created_at: string; // datetime
+  updatedAt: string; // Backend uses camelCase
   emails: Email[]; // Emails belonging to this conversation
 }
+
+// Helper function to parse participants from JSON string
+export const parseParticipants = (participantEmails: string): string[] => {
+  try {
+    return JSON.parse(participantEmails);
+  } catch {
+    return [];
+  }
+};
 

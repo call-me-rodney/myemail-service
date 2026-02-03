@@ -35,6 +35,8 @@ export class AuthService {
       userid: user.id,
       role: user.role,
       accessToken: token,
+      email: user.email,
+      name: `${user.fname} ${user.lname}`,
     } 
     return response;
   }
@@ -62,6 +64,8 @@ export class AuthService {
         userid: user.id,
         role: user.role,
         accessToken: token,
+        email: user.email,
+        name: `${user.fname} ${user.lname}`,
       }
       return response;
     } catch (error) {

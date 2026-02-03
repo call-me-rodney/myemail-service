@@ -1,7 +1,7 @@
 // client/src/services/socket.ts
 import { io, Socket } from 'socket.io-client';
 
-const BACKEND_URL = 'http://localhost:3000'; // Assuming your NestJS backend runs on port 3000
+const BACKEND_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
 class SocketService {
   public socket: Socket | null = null;
