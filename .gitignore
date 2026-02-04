@@ -48,6 +48,7 @@ Thumbs.db
 # NestJS
 dist/
 node_modules/
+package-lock.json
 
 # Vite
 .vite/

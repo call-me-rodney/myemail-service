@@ -46,5 +46,19 @@ An enterprise grade emailing service
 ## FUNCTIONAL BREAKDOWN
 ### Sending and receiving emails (single/bulk)
 #### WORKFLOW
-An authenticated user is greeted by the email sending tab. Here, the user on behalf of their company can send email campaigns to a single or multiple recipients. There will also be an option for bulk sending where an email list can be appended/imported as needed
+An authenticated user is greeted by the email sending tab. Here, the user on behalf of their company can send email campaigns to a single or multiple recipients. There will also be an option for bulk sending where an email list can be appended/imported as needed. The user must have the option of sending the emails immediately or scheduling them for a given time.
 
+#### REQUIREMENTS
+##### FRONTEND
+- Sending emails tab (switch between single and bulk)
+- mail list tab
+- Organisational settings to manage users for an organisation
+- Form option for scheduled email sends
+
+##### BACKEND
+- API route for sending single or bulk emails
+- API route for CRUD operations on contacts
+- Modified User model and API to include organisations.
+- API routes for managing Organisations
+- Modified user roles to delegate organisational roles
+- cron job for sending scheduled emails

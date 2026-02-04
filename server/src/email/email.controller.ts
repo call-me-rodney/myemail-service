@@ -44,12 +44,14 @@ export class EmailController {
   @Patch(':id')
   @Roles([roles.user, roles.admin])
   async update(@Param('id') id: string, @Body() updateEmailDto: UpdateEmailDto) {
+    await this.emailService.update(id, updateEmailDto);
+
     if (updateEmailDto.status === Status.Pending) {
       const emailPayload = await this.emailService.findOne(id);
-      this.emailService.handleOutboundMail(emailPayload);
+      return this.emailService.handleOutboundMail(emailPayload);
+    }else {
+      return `Update to email with id: ${id} successful.`
     }
-
-    return this.emailService.update(id, updateEmailDto);
   }
 
   @Delete(':id')

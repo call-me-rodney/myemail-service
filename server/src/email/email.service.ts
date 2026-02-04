@@ -10,13 +10,10 @@ import { Conversations } from './models/conversation.model';
 import { CreateEmailDto } from './dto/create-email.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
 import { Status, Priority } from './types/enums.types';
-import { WebhookEvent } from './types/int.types';
-import { Webhook } from 'svix';
 import { EmailGateway} from './providers/websocket.service';
 import { simpleParser} from 'mailparser';
 import { UsersService } from 'src/users/users.service';
 import emailjs, { EmailJSResponseStatus } from '@emailjs/nodejs';
-import { ResendService } from './providers/resend.service';
 
 @Injectable()
 export class EmailService {
@@ -28,7 +25,6 @@ export class EmailService {
     private sequelize: Sequelize,
     private emailGateway: EmailGateway,
     private usersService: UsersService,
-    private resendService: ResendService,
     // private configService: ConfigService,
   ) {}
 
@@ -142,7 +138,6 @@ export class EmailService {
       }
     
       // Handle outbound mail if status is pending
-      // this.handleOutboundMail(completeEmail);
       this.handleSingleMail(completeEmail);
       return completeEmail.toJSON();
     });
@@ -395,137 +390,6 @@ export class EmailService {
         console.log('Error: ', err);
         return;
       }
-    }
-  }
-
-  async handleOutboundMail(emailPayload: Email): Promise<void> {
-    // check status of mail
-    if (emailPayload.status === Status.Pending) {
-      // Collect all recipients: to_email + recipients array
-      interface Recipient {
-        email: string;
-        type: string;
-      }
-      const allRecipients: Recipient[] = [];
-
-      // Add to_email if present
-      if (emailPayload.to_email) {
-        allRecipients.push({
-          email: emailPayload.to_email,
-          type: 'to',
-        });
-      }
-
-      // Add recipients from recipients array (CC/BCC)
-      if (emailPayload.recipients && emailPayload.recipients.length > 0) {
-        emailPayload.recipients.forEach(r => {
-          allRecipients.push({
-            email: r.recipient_email,
-            type: r.recipient_type,
-          });
-        });
-      }
-
-      // If no recipients found, return early
-      if (allRecipients.length === 0) {
-        return;
-      }
-
-      // Separate internal and external recipients
-      const internalRecipients = allRecipients.filter(r => r.email.includes('brevomail.me'));
-      const externalRecipients = allRecipients.filter(r => !r.email.includes('brevomail.me'));
-
-      // Send to internal recipients via WebSocket
-      if (internalRecipients.length > 0) {
-        try {
-          const userIds = await Promise.all(
-            internalRecipients.map(async r => (await this.usersService.findByEmail(r.email)).id),
-          );
-          this.emailGateway.sendNewEmailNotificationToMany(
-            userIds,
-            emailPayload.toJSON(),
-          );
-        } catch (error) {
-          console.error('Error sending to internal recipients:', error);
-        }
-      }
-
-      // Send to external recipients via email service
-      if (externalRecipients.length > 0) {
-        try {
-          await this.resendService.sendEmail(
-            externalRecipients.map(r => r.email).join(', '),
-            emailPayload.subject,
-            emailPayload.textcontent,
-            emailPayload.from_email,
-          );
-        } catch (error) {
-          console.error('Error sending to external recipients:', error);
-        }
-      }
-
-      // Mark as sent only if at least one internal recipient exists
-      // External recipients status will be updated via webhooks
-      if (internalRecipients.length > 0) {
-        this.markAsSent(emailPayload.id);
-      }
-    } else if (emailPayload.status === Status.Draft) {
-      return;
-    }
-  }
-
-  async handleOutboundStatus(headers: any, payload: any): Promise<void | string> {
-    // const webhookSecret = this.configService.get<string>('RESEND_WEBHOOK_SECRET');
-    const webhookSecret = "whsec_W7e6iv5MoQnLijD38gL6ErJBxgmCl86i";
-    const webhook = new Webhook(webhookSecret || '');
-    const event = webhook.verify(payload, headers) as WebhookEvent;
-
-    if (event.type === 'email.sent') {
-      // verify the email specified in the to email field exists in our users table
-      const toAddress = event.data.to[0];
-      const userObj = this.usersService.findByEmail(toAddress || '');
-
-      if (!userObj) {
-        throw new NotFoundException('Recipient user not found');
-      }
-      const user = (await userObj).toJSON();
-      const emailsObj = this.emailModel.findAll({
-        where: {
-          user_id: user.id,
-          subject: event.data.subject || '(No Subject)',
-        },
-        order: [['created_at', 'DESC']],
-      });
-      const emails = emailsObj.then(results => results.map(email => email.toJSON()));
-      const latestEmail = (await emails)[0];
-
-      if (latestEmail) {
-        await this.markAsSent(latestEmail.id);
-      }
-      return `Email sent successfully`;
-    } else if (event.type === 'email.failed') {
-      // verify the email specified in the to email field exists in our users table
-      const toAddress = event.data.to[0];
-      const userObj = this.usersService.findByEmail(toAddress || '');
-
-      if (!userObj) {
-        throw new NotFoundException('Recipient user not found');
-      }
-      const user = (await userObj).toJSON();
-      const emailsObj = this.emailModel.findAll({
-        where: {
-          user_id: user.id,
-          subject: event.data.subject || '(No Subject)',
-        },
-        order: [['created_at', 'DESC']],
-      });
-      const emails = emailsObj.then(results => results.map(email => email.toJSON()));
-      const latestEmail = (await emails)[0];
-
-      if (latestEmail) {
-        await this.update(latestEmail.id, { status: Status.Failed } as UpdateEmailDto);
-      }
-      return `Email delivery failed`;
     }
   }
 }
