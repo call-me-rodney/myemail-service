@@ -1,5 +1,5 @@
 import { Table, Column, Model, AllowNull, PrimaryKey, CreatedAt, UpdatedAt, DeletedAt, Unique, DataType } from "sequelize-typescript";
-import { roles } from "../types/enum.types";
+import { roles, sendLimits } from "../types/enum.types";
 
 @Table({tableName:'users'})
 export class User extends Model {
@@ -14,16 +14,19 @@ export class User extends Model {
     lname: string;
 
     @Column
+    @AllowNull
     role: roles;
 
     @Unique
     @Column
+    @AllowNull
     email: string;
 
     @Column
     dob: Date;
 
     @Column
+    @AllowNull
     password: string;
 
     @Column
@@ -32,8 +35,12 @@ export class User extends Model {
     @Column
     timezone: string;
 
-    @Column({defaultValue: 50})
-    dailySendLimit: number;
+    @Column
+    company: string;
+
+    @Column({defaultValue: sendLimits.user})
+    @AllowNull
+    dailySendLimit: sendLimits;
 
     @CreatedAt
     @Column({defaultValue: new Date()})

@@ -1,5 +1,4 @@
-import { IsDateString, IsEmail, IsString, IsEnum } from "@nestjs/class-validator";
-import { roles } from "../types/enum.types"
+import { IsDateString, IsString } from "@nestjs/class-validator";
 
 export class CreateUserDto {
     @IsString()
@@ -7,24 +6,16 @@ export class CreateUserDto {
 
     @IsString()
     lname: string;
-
-    @IsEmail()
-    @IsString()
-    email: string;
     
     @IsDateString()
     dob: Date;
 
     @IsString()
-    password: string;
+    company: string;
 
     @IsString()
     phone: string;
 
     @IsString()
     timezone: string;
-
-    @IsEnum(roles)
-    @IsString()
-    role: roles;
 }
