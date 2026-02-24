@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import morgan from 'morgan';
 // import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
@@ -12,6 +13,9 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
+
+  // use morgan for API logging
+  app.use(morgan("common"));
 
   // const configService = app.get(ConfigService);
   // const port = configService.get<number>('PORT');

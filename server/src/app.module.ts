@@ -46,6 +46,7 @@ import { ContactsModule } from './contacts/contacts.module';
       models: [],
       autoLoadModels: true,
       synchronize: true,
+      logging: false,
     }),
     // SequelizeModule.forRootAsync({
     //   imports: [ConfigModule],
