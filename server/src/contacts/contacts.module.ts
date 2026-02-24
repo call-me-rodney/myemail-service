@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { Contact } from './models/contact.model';
+import { MailingList } from './models/mailing-list.model';
 import { ContactsService } from './contacts.service';
 import { ContactsController } from './contacts.controller';
 
 @Module({
-  imports: [SequelizeModule.forFeature([Contact])],
+  imports: [SequelizeModule.forFeature([Contact, MailingList])],
   controllers: [ContactsController],
   providers: [ContactsService],
 })

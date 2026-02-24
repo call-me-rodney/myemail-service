@@ -3,6 +3,8 @@ import type { Request } from 'express';
 import { ContactsService } from './contacts.service';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
+import { CreateMailingListDto } from './dto/create-mailing-list.dto';
+import { UpdateMailingListDto } from './dto/update-mailing-list.dto';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -49,5 +51,44 @@ export class ContactsController {
   @Roles([roles.admin])
   remove(@Param('id') id: string) {
     return this.contactsService.remove(id);
+  }
+
+  // Mailing List routes
+  @Post('mailing-lists')
+  @Roles([roles.user, roles.admin])
+  createMailingList(@Req() req: Request, @Body() createMailingListDto: CreateMailingListDto) {
+    const userId = (req as any).user?.sub || (req as any).user?.id;
+    return this.contactsService.createMailingList({ ...createMailingListDto, user_id: userId });
+  }
+
+  @Get('mailing-lists')
+  @Roles([roles.admin])
+  findAllMailingLists() {
+    return this.contactsService.findAllMailingLists();
+  }
+
+  @Get('mailing-lists/user')
+  @Roles([roles.user, roles.admin])
+  findUserMailingLists(@Req() req: Request) {
+    const userId = (req as any).user?.sub || (req as any).user?.id;
+    return this.contactsService.findUserMailingLists(userId);
+  }
+
+  @Get('mailing-lists/:id')
+  @Roles([roles.user, roles.admin])
+  findOneMailingList(@Param('id') id: string) {
+    return this.contactsService.findOneMailingList(id);
+  }
+
+  @Patch('mailing-lists/:id')
+  @Roles([roles.user, roles.admin])
+  updateMailingList(@Param('id') id: string, @Body() updateMailingListDto: UpdateMailingListDto) {
+    return this.contactsService.updateMailingList(id, updateMailingListDto);
+  }
+
+  @Delete('mailing-lists/:id')
+  @Roles([roles.user, roles.admin])
+  removeMailingList(@Param('id') id: string) {
+    return this.contactsService.removeMailingList(id);
   }
 }

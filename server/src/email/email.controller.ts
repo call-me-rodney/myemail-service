@@ -21,6 +21,16 @@ export class EmailController {
     return this.emailService.create({ ...createEmailDto, user_id: userId });
   }
 
+  @Post('bulk')
+  @Roles([roles.user, roles.admin])
+  sendBulkEmail(@Req() req: Request, @Body() body: { emailPayload: CreateEmailDto; mailingList: string[] }) {
+    const userId = (req as any).user?.sub || (req as any).user?.id;
+    return this.emailService.handleBulkMail(
+      { ...body.emailPayload, user_id: userId },
+      body.mailingList
+    );
+  }
+
   @Get()
   @Roles([roles.admin])
   findAll() {
@@ -48,7 +58,7 @@ export class EmailController {
 
     if (updateEmailDto.status === Status.Pending) {
       const emailPayload = await this.emailService.findOne(id);
-      return this.emailService.handleOutboundMail(emailPayload);
+      return this.emailService.handleSingleMail(emailPayload);
     }else {
       return `Update to email with id: ${id} successful.`
     }

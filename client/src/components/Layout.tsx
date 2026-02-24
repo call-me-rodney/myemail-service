@@ -1,5 +1,5 @@
 // client/src/components/Layout.tsx
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -16,77 +16,33 @@ import {
   Menu,
   MenuItem,
   Divider,
-  InputBase,
-  Button,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
-  Inbox as InboxIcon,
-  Drafts as DraftsIcon,
-  Send as SendIcon,
-  Schedule as ScheduleIcon,
+  Campaign as CampaignIcon,
+  ListAlt as ListAltIcon,
+  Settings as SettingsIcon,
   Logout as LogoutIcon,
-  Search as SearchIcon,
   Email as EmailIcon,
 } from '@mui/icons-material';
-import { styled, alpha } from '@mui/material/styles';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import ComposeModal from './ComposeModal'; // Import ComposeModal
-import useEmails from '../hooks/useEmails'; // Import useEmails hook
 
 const drawerWidth = 240;
 
-const Search = styled('div')(({ theme }) => ({
-  position: 'relative',
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: alpha(theme.palette.common.white, 0.15),
-  '&:hover': {
-    backgroundColor: alpha(theme.palette.common.white, 0.25),
-  },
-  marginRight: theme.spacing(2),
-  marginLeft: 0,
-  width: '100%',
-  [theme.breakpoints.up('sm')]: {
-    marginLeft: theme.spacing(3),
-    width: 'auto',
-  },
-}));
-
-const SearchIconWrapper = styled('div')(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: '100%',
-  position: 'absolute',
-  pointerEvents: 'none',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: 'inherit',
-  '& .MuiInputBase-input': {
-    padding: theme.spacing(1, 1, 1, 0),
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create('width'),
-    width: '100%',
-    [theme.breakpoints.up('md')]: {
-      width: '20ch',
-    },
-  },
-}));
+export type DashboardSection = 'emails' | 'lists' | 'settings';
 
 interface LayoutProps {
   children: React.ReactNode;
+  activeSection: DashboardSection;
+  onSectionChange: (section: DashboardSection) => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({ children, activeSection, onSectionChange }) => {
   const { name, email, logout } = useAuth();
   const navigate = useNavigate();
-  const { reloadEmails } = useEmails(); // Destructure reloadEmails from useEmails
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [composeModalOpen, setComposeModalOpen] = useState(false); // State for compose modal
   const open = Boolean(anchorEl);
 
   const handleDrawerToggle = () => {
@@ -107,18 +63,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     handleClose();
   };
 
-  const handleComposeClick = () => {
-    setComposeModalOpen(true);
-  };
-
-  const handleComposeModalClose = () => {
-    setComposeModalOpen(false);
-  };
-
-  const handleSendSuccess = () => {
-    setComposeModalOpen(false);
-    reloadEmails(); // Reload emails after successful send
-  };
+  const menuItems = useMemo(
+    () => [
+      { key: 'emails' as const, label: 'Emails', icon: <CampaignIcon /> },
+      { key: 'lists' as const, label: 'Mailing Lists', icon: <ListAltIcon /> },
+      { key: 'settings' as const, label: 'Settings', icon: <SettingsIcon /> },
+    ],
+    [],
+  );
 
   const drawer = (
     <Box>
@@ -139,33 +91,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </ListItem>
         )}
         <Divider sx={{ my: 1 }} />
-        {['Inbox', 'Drafts', 'Sent', 'Scheduled'].map((text) => (
-          <ListItem 
-            key={text} 
-            onClick={() => console.log(text)}
-            sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+        {menuItems.map((item) => (
+          <ListItem
+            key={item.key}
+            onClick={() => onSectionChange(item.key)}
+            sx={{
+              cursor: 'pointer',
+              borderRadius: 2,
+              mx: 1,
+              '&:hover': { bgcolor: 'action.hover' },
+              bgcolor: activeSection === item.key ? 'action.selected' : 'transparent',
+            }}
           >
-            <ListItemIcon>
-              {text === 'Inbox' && <InboxIcon />}
-              {text === 'Drafts' && <DraftsIcon />}
-              {text === 'Sent' && <SendIcon />}
-              {text === 'Scheduled' && <ScheduleIcon />}
-            </ListItemIcon>
-            <ListItemText primary={text} />
+            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.label} />
           </ListItem>
         ))}
-        <Divider sx={{ my: 1 }} />
-        <ListItem>
-            <Button
-                variant="contained"
-                color="primary"
-                fullWidth
-                sx={{ py: 1.5, borderRadius: 2 }}
-                onClick={handleComposeClick}
-            >
-                Compose
-            </Button>
-        </ListItem>
         <Box sx={{ flexGrow: 1 }} /> {/* Pushes logout to bottom */}
         <ListItem 
           onClick={handleLogout} 
@@ -200,17 +141,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ display: { xs: 'none', sm: 'block' } }}>
-            MyMail
+            MyMail Campaigns
           </Typography>
-          <Search>
-            <SearchIconWrapper>
-              <SearchIcon />
-            </SearchIconWrapper>
-            <StyledInputBase
-              placeholder="Search…"
-              inputProps={{ 'aria-label': 'search' }}
-            />
-          </Search>
           <Box sx={{ flexGrow: 1 }} />
           {name && (
             <IconButton
@@ -288,11 +220,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <Toolbar /> {/* This is to offset the content below the fixed AppBar */}
         {children}
       </Box>
-      <ComposeModal
-        open={composeModalOpen}
-        onClose={handleComposeModalClose}
-        onSendSuccess={handleSendSuccess}
-      />
     </Box>
   );
 };

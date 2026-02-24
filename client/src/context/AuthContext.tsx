@@ -11,6 +11,7 @@ interface AuthContextType {
   accessToken: string | null;
   email: string | null;
   name: string | null;
+  updateName: (name: string) => void;
   login: (credentials: { email: string; password: string }) => Promise<void>;
   register: (userData: CreateUserDTO) => Promise<void>;
   logout: () => void;
@@ -93,10 +94,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     handleAuthResponse(data);
   }, [handleAuthResponse]);
 
+  const updateName = useCallback((nextName: string) => {
+    const trimmed = nextName.trim();
+    if (!trimmed) return;
+    localStorage.setItem('name', trimmed);
+    setName(trimmed);
+  }, []);
+
 
 
   return (
-    <AuthContext.Provider value={{ userid, role, accessToken, email, name, login: loginUser, register: registerUser, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ userid, role, accessToken, email, name, updateName, login: loginUser, register: registerUser, logout, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 // import { ConfigService } from '@nestjs/config';
 import { Sequelize } from 'sequelize-typescript';
@@ -10,7 +10,6 @@ import { Conversations } from './models/conversation.model';
 import { CreateEmailDto } from './dto/create-email.dto';
 import { UpdateEmailDto } from './dto/update-email.dto';
 import { Status, Priority } from './types/enums.types';
-import { EmailGateway} from './providers/websocket.service';
 import { simpleParser} from 'mailparser';
 import { UsersService } from 'src/users/users.service';
 import emailjs, { EmailJSResponseStatus } from '@emailjs/nodejs';
@@ -23,15 +22,17 @@ export class EmailService {
     @InjectModel(Attachments) private attachmentsModel: typeof Attachments,
     @InjectModel(Conversations) private conversationsModel: typeof Conversations,
     private sequelize: Sequelize,
-    private emailGateway: EmailGateway,
     private usersService: UsersService,
     // private configService: ConfigService,
   ) {}
+  private readonly logger = new Logger(EmailService.name);
 
   // create new email record with recipients, attachments, and conversation
   async create(createEmailDto: CreateEmailDto): Promise<Email> {
     // Use transaction to ensure all records are created atomically
     return this.sequelize.transaction(async (transaction) => {
+      // log dto for debugging
+      this.logger.log(`Creating email with DTO: ${JSON.stringify(createEmailDto)}`);
       const { recipients, attachments, conversation_id, ...emailData } = createEmailDto;
 
       // Fetch user data to populate from_name if not provided
@@ -136,7 +137,9 @@ export class EmailService {
       if (!completeEmail) {
         throw new Error('Failed to retrieve created email');
       }
-    
+      
+      // log email object for debugging
+      this.logger.log(`Created email: ${JSON.stringify(completeEmail.toJSON())}`);
       // Handle outbound mail if status is pending
       this.handleSingleMail(completeEmail);
       return completeEmail.toJSON();
@@ -312,12 +315,12 @@ export class EmailService {
     const toAddress = Array.isArray(parsedEmail.to) 
       ? parsedEmail.to[0]?.text 
       : parsedEmail.to?.text;
-    const userObj = this.usersService.findByEmail(toAddress || '');
+    const userObj = await this.usersService.findByEmail(toAddress || '');
 
     if (!userObj) {
       throw new NotFoundException('Recipient user not found');
     }
-    const user = (await userObj).toJSON();
+    const user = userObj.toJSON();
 
     // save necessary details to DB and send jsonified email via websocket to client instead of raw email
     const emailsObj = this.emailModel.findAll({
@@ -362,35 +365,78 @@ export class EmailService {
   }
 
   async handleSingleMail(emailPayload: Email): Promise<void> {
-    await emailPayload.update({sent_at: new Date()});
-    const send_time = emailPayload.sent_at || new Date();
+    const send_time = new Date();
+    const email = emailPayload.toJSON();
     emailjs.init({
       publicKey:'zQXdkPnjzkxtZJ8rW',
       privateKey:'YruEG3HwAbeEQIJBHVjay',
     })
 
     const templateParams = {
-      subject: emailPayload.subject,
-      name: emailPayload.from_name,
-      to: emailPayload.to_email,
+      title: email.subject,
+      name: email.from_name, 
+      from_name: email.from_name,
       time: send_time.toDateString(),
-      text: emailPayload.textcontent,
-      from_name: emailPayload.from_name,
-      from_email: emailPayload.from_email,
+      message: email.textcontent,
+      to_email: email.to_email,
+      from_email: email.from_email,
     }
 
     try {
-      await emailjs.send("gmail_service","test_template",templateParams)
-      .then( (response) => {
-        console.log('SUCCESS!', response.status, response.text);
-        this.markAsSent(emailPayload.id);
-      })
+      const response = await emailjs.send("service_x7sgsil","template_8w8ybsv",templateParams);
+      this.logger.log(`Success: ${response.status} - ${response.text}`);
+      await this.markAsSent(emailPayload.id);
     } catch (err) {
       if (err instanceof EmailJSResponseStatus) {
-        console.log('Error: ', err);
+        this.logger.error(`Error: ${JSON.stringify(err)}`);
         return;
       }
     }
+  }
+
+  async handleBulkMail(emailPayload: CreateEmailDto, mailingList: string[]): Promise<Email> {
+    // First, save the email to the database using the create function
+    const savedEmail = await this.create(emailPayload);
+
+    // Initialize EmailJS
+    emailjs.init({
+      publicKey: 'zQXdkPnjzkxtZJ8rW',
+      privateKey: 'YruEG3HwAbeEQIJBHVjay',
+    });
+
+    const send_time = new Date();
+
+    // Send email to each address in the mailing list
+    const sendPromises = mailingList.map(async (recipientEmail: string) => {
+      const templateParams = {
+        title: savedEmail.subject,
+        name: savedEmail.from_name,
+        to_email: recipientEmail,
+        time: send_time.toDateString(),
+        message: savedEmail.textcontent,
+        from_name: savedEmail.from_name,
+        from_email: savedEmail.from_email,
+      };
+
+      try {
+        const response = await emailjs.send("gmail_service", "test_template", templateParams);
+        console.log(`SUCCESS! Email sent to ${recipientEmail}`, response.status, response.text);
+        return { email: recipientEmail, success: true };
+      } catch (err) {
+        if (err instanceof EmailJSResponseStatus) {
+          console.log(`Error sending to ${recipientEmail}:`, err);
+          return { email: recipientEmail, success: false, error: err };
+        }
+      }
+    });
+
+    // Wait for all emails to be sent
+    await Promise.all(sendPromises);
+
+    // Mark as sent after successful sending
+    await this.markAsSent(savedEmail.id);
+
+    return savedEmail;
   }
 }
 

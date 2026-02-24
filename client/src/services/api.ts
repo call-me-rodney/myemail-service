@@ -55,5 +55,40 @@ export const sendEmail = async (emailData: CreateEmailDto): Promise<Email> => {
   return response.data;
 };
 
+export const sendBulkEmail = async (payload: { emailPayload: CreateEmailDto; mailingList: string[] }): Promise<Email> => {
+  const response = await api.post<Email>('/email/bulk', payload);
+  return response.data;
+};
+
+// Mailing List API calls
+export interface MailingListData {
+  id?: string;
+  user_id?: string;
+  name: string;
+  description?: string;
+  emails: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export const fetchMailingLists = async (): Promise<MailingListData[]> => {
+  const response = await api.get<MailingListData[]>('/contacts/mailing-lists/user');
+  return response.data;
+};
+
+export const createMailingList = async (data: { name: string; description?: string; emails: string[] }): Promise<MailingListData> => {
+  const response = await api.post<MailingListData>('/contacts/mailing-lists', data);
+  return response.data;
+};
+
+export const updateMailingList = async (id: string, data: { name?: string; description?: string; emails?: string[] }): Promise<MailingListData> => {
+  const response = await api.patch<MailingListData>(`/contacts/mailing-lists/${id}`, data);
+  return response.data;
+};
+
+export const deleteMailingList = async (id: string): Promise<void> => {
+  await api.delete(`/contacts/mailing-lists/${id}`);
+};
+
 // Add other API calls as needed for contacts, analytics etc.
 export default api;
