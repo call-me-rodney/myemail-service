@@ -62,6 +62,22 @@ export class UsersService {
     return `The user with ID: ${user.id} has been updated`;
   }
 
+  // helper function for filtering out unverified users
+  async fetchUnverified(): Promise<string | string[]> {
+    const users = await this.userModel.findAll({
+      where: {
+        is_verfied : false,
+        is_active : true
+      }
+    });
+
+    if (!users){
+      return "There are no unverified active users at the moment"
+    }
+
+    return users.map(user => user.toJSON());
+  }
+
   async deactivate(id: string): Promise<string> {
     const user = await this.userModel.findByPk(id);
 

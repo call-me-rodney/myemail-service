@@ -8,7 +8,7 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { roles } from './types/enum.types';
 
 @Controller('users')
-@Roles([roles.admin])
+@Roles([roles.companyadmin,roles.superadmin])
 @UseGuards(AuthGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -24,10 +24,10 @@ export class UsersController {
   }
 
   //implement filtering logic later
-  @Get('filter')
-  filter(@Query() query: any) {
-    return `This action filters users`;
-  }
+  // @Get('filter')
+  // filter(@Query() query: any) {
+  //   return `This action filters users`;
+  // }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
@@ -37,6 +37,12 @@ export class UsersController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
+  }
+
+  //implement company specific fetching
+  @Get('verify')
+  fetchUnverified(){
+    return this.usersService.fetchUnverified();
   }
 
   /*endpoint used to deactivate a user account if they haven't verified their accounts in
