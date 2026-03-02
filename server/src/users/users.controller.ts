@@ -40,9 +40,9 @@ export class UsersController {
   }
 
   //implement company specific fetching
-  @Get('verify')
-  fetchUnverified(){
-    return this.usersService.fetchUnverified();
+  @Get('verify/:company')
+  fetchUnverified(@Param('company') company: string){
+    return this.usersService.fetchUnverified(company);
   }
 
   /*endpoint used to deactivate a user account if they haven't verified their accounts in
