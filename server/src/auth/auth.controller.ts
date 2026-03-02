@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { roles } from 'src/users/types/enum.types';
 import { AuthGuard } from 'src/common/guards/auth.guard';
-import type { LoginPayload, OTP } from './types/int.types';
+import type { LoginPayload } from './types/int.types';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 
 @Controller('auth')
@@ -21,21 +21,21 @@ export class AuthController {
     return this.authService.login(loginPayload);
   }
 
-  @HttpCode(200)
-  @UseGuards(AuthGuard)
-  @Post('otp')
-  @Roles([roles.user, roles.admin])
-  generateOTP(@Req() req: Request){
-    const userid = (req as any).user?.sub || (req as any).user?.id;
-    return this.authService.generateOTP(userid)
-  }
+  // @HttpCode(200)
+  // @UseGuards(AuthGuard)
+  // @Post('otp')
+  // @Roles([roles.user, roles.admin])
+  // generateOTP(@Req() req: Request){
+  //   const userid = (req as any).user?.sub || (req as any).user?.id;
+  //   return this.authService.generateOTP(userid)
+  // }
 
-  @HttpCode(200)
-  @UseGuards(AuthGuard)
-  @Post('verify')
-  @Roles([roles.admin,roles.user])
-  verifyOTP(@Req() req: Request, otp: OTP) {
-    const userid = (req as any).user?.sub || (req as any).user?.id;
-    return this.authService.verifyOTP(userid,otp)
-  }
+  // @HttpCode(200)
+  // @UseGuards(AuthGuard)
+  // @Post('verify')
+  // @Roles([roles.admin,roles.user])
+  // verifyOTP(@Req() req: Request, otp: OTP) {
+  //   const userid = (req as any).user?.sub || (req as any).user?.id;
+  //   return this.authService.verifyOTP(userid,otp)
+  // }
 }

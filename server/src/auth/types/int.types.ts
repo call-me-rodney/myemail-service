@@ -11,6 +11,6 @@ export interface ResponsePayload {
   name: string; // Full name: fname lname
 }
 
-export interface OTP {
-  otp: string;
-}
+// export interface OTP {
+//   otp: string;
+// }
