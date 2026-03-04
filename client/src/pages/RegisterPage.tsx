@@ -9,14 +9,13 @@ const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState<CreateUserDTO>({
     fname: '',
     lname: '',
-    email: '',
     dob: '',
-    password: '',
+    company: '',
     phone: '',
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-    role: 'user',
   });
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -27,18 +26,16 @@ const RegisterPage: React.FC = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
+    setIsSubmitting(true);
     try {
-      if (!formData.password) {
-        setError('Password cannot be empty.');
-        return;
-      }
-      
-      // Send registration payload
       await register(formData);
-      navigate('/');
+      navigate('/register/success');
     } catch (err) {
       setError('Registration failed. Please try again.');
       console.error(err);
+      navigate('/register/failed');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -55,6 +52,9 @@ const RegisterPage: React.FC = () => {
         <Paper elevation={6} sx={{ p: 4, borderRadius: 2 }}>
           <Typography component="h1" variant="h5" sx={{ mb: 2 }}>
             Sign Up for MyMail
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Complete your biodata to request access.
           </Typography>
           <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
             <TextField
@@ -83,27 +83,15 @@ const RegisterPage: React.FC = () => {
               margin="normal"
               required
               fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
-              value={formData.email}
+              id="company"
+              label="Company"
+              name="company"
+              value={formData.company}
               onChange={handleChange}
             />
             <TextField
               margin="normal"
               required
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              id="password"
-              autoComplete="new-password"
-              value={formData.password}
-              onChange={handleChange}
-            />
-             <TextField
-              margin="normal"
               fullWidth
               id="phone"
               label="Phone Number"
@@ -112,13 +100,26 @@ const RegisterPage: React.FC = () => {
               value={formData.phone}
               onChange={handleChange}
             />
-             <TextField
+            <TextField
               margin="normal"
+              required
               fullWidth
               id="dob"
-              label="Date of Birth (YYYY-MM-DD)"
+              label="Date of Birth"
               name="dob"
+              type="date"
+              InputLabelProps={{ shrink: true }}
               value={formData.dob}
+              onChange={handleChange}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="timezone"
+              label="Timezone"
+              name="timezone"
+              value={formData.timezone}
               onChange={handleChange}
             />
             {error && (
@@ -130,9 +131,10 @@ const RegisterPage: React.FC = () => {
               type="submit"
               fullWidth
               variant="contained"
+              disabled={isSubmitting}
               sx={{ mt: 3, mb: 2 }}
             >
-              Sign Up
+              {isSubmitting ? 'Submitting...' : 'Submit Registration'}
             </Button>
             <Link href="/login" variant="body2">
               {"Already have an account? Sign In"}

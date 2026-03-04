@@ -4,12 +4,10 @@
 export interface CreateUserDTO {
   fname: string;
   lname: string;
-  email: string;
-  password: string;
-  phone: string;
   dob: string;
-  timezone?: string;
-  role?: 'user' | 'admin';
+  company: string;
+  phone: string;
+  timezone: string;
 }
 
 // Auth response - both login and register return the same format
