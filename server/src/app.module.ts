@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { UsersModule } from './users/users.module';
 import { ContactsModule } from './contacts/contacts.module';
+import { CompanyModule } from './company/company.module';
 // import * as path from 'path';
 
 @Module({
@@ -68,6 +69,7 @@ import { ContactsModule } from './contacts/contacts.module';
     UsersModule,
     ContactsModule,
     AnalyticsModule,
+    CompanyModule,
   ],
   controllers: [AppController],
   providers: [AppService],
