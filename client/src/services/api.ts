@@ -60,6 +60,43 @@ export const sendBulkEmail = async (payload: { emailPayload: CreateEmailDto; mai
   return response.data;
 };
 
+export interface CompanyData {
+  id?: string;
+  name: string;
+  email?: string;
+  address?: string;
+  service?: string;
+}
+
+export const fetchCompanies = async (): Promise<CompanyData[]> => {
+  const response = await api.get('/company');
+  const data = response.data;
+
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data
+    .map((item: any) => {
+      if (typeof item === 'string') {
+        return { name: item } as CompanyData;
+      }
+
+      if (item && typeof item === 'object') {
+        return {
+          id: item.id,
+          name: item.name || item.company || '',
+          email: item.email,
+          address: item.address,
+          service: item.service,
+        } as CompanyData;
+      }
+
+      return null;
+    })
+    .filter((item: CompanyData | null) => Boolean(item?.name));
+};
+
 // Mailing List API calls
 export interface MailingListData {
   id?: string;
