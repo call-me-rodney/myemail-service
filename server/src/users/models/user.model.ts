@@ -1,5 +1,6 @@
-import { Table, Column, Model, AllowNull, PrimaryKey, CreatedAt, UpdatedAt, DeletedAt, Unique, DataType } from "sequelize-typescript";
+import { Table, Column, Model, AllowNull, PrimaryKey, CreatedAt, UpdatedAt, DeletedAt, Unique, DataType, ForeignKey, HasOne, BelongsTo } from "sequelize-typescript";
 import { roles, sendLimits } from "../types/enum.types";
+import { Company } from "src/company/models/company.model";
 
 @Table({tableName:'users'})
 export class User extends Model {
@@ -35,6 +36,7 @@ export class User extends Model {
     @Column
     timezone: string;
 
+    @ForeignKey(()=> Company)
     @Column
     company: string;
 
@@ -71,5 +73,13 @@ export class User extends Model {
 
     @AllowNull
     @Column
-    verified_using: string;
+    @ForeignKey(()=> User)
+    verified_by: string;
+
+    // associations
+    @HasOne(()=> User)
+    verifier: User;
+
+    @BelongsTo(()=> Company)
+    companyDetails: Company;
 }

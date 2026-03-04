@@ -6,6 +6,7 @@ import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { roles } from './types/enum.types';
+import { VerificationRequest } from './types/int.types';
 
 @Controller('users')
 @Roles([roles.companyadmin,roles.superadmin])
@@ -43,6 +44,11 @@ export class UsersController {
   @Get('verify/:company')
   fetchUnverified(@Param('company') company: string){
     return this.usersService.fetchUnverified(company);
+  }
+
+  @Patch('verify')
+  setVerified(@Body() verificationRequest: VerificationRequest) {
+    return this.usersService.setVerified(verificationRequest);
   }
 
   /*endpoint used to deactivate a user account if they haven't verified their accounts in

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from './models/user.model';
+import { VerificationRequest } from './types/int.types';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -79,6 +80,29 @@ export class UsersService {
     return users.map(user => user.toJSON());
   }
 
+  async setVerified(verificationRequest: VerificationRequest): Promise<string> {
+    const userObj = await this.userModel.findByPk(verificationRequest.userid);
+
+    if (!userObj) {
+      throw new NotFoundException('User not found');
+    }
+
+    const user = userObj.toJSON();
+    await userObj.update({
+      role: verificationRequest.role,
+      email: `${user.fname}.${user.lname}@brevomail.com`,
+      password: `${user.fname}${user.lname}@${user.company}`,
+      is_verified: true,
+      verified_at: new Date(),
+      updated_at: new Date(),
+      verified_by: verificationRequest.verified_by
+    });
+
+    // send twilio SMS here
+
+    return `The user with ID: ${user.id} has been verified and activated`;
+  }
+
   async deactivate(id: string): Promise<string> {
     const user = await this.userModel.findByPk(id);
 
@@ -87,6 +111,9 @@ export class UsersService {
     }
 
     await user.update({ is_active: false });
+
+    // send an SMS notifying the user of registration denia or removal from duty
+  
     return `The user with ID: ${user.id} has been deactivated`;
   }
 
