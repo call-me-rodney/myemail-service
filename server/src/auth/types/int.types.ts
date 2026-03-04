@@ -9,6 +9,7 @@ export interface ResponsePayload {
   accessToken: string;
   email: string;
   name: string; // Full name: fname lname
+  company: string;
 }
 
 // export interface OTP {

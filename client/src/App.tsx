@@ -18,7 +18,7 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 const RoleBasedDashboard: React.FC = () => {
   const { role } = useAuth();
 
-  if (role === 'admin') {
+  if (role === 'admin' || role === 'company admin' || role === 'super admin') {
     return <AdminDashboardPage />;
   }
 
@@ -33,7 +33,7 @@ const App: React.FC = () => {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/register/success" element={<RegisterSuccessPage />} />
         <Route path="/register/failed" element={<RegisterFailedPage />} />
-        // <Route path="/admin" element={<AdminDashboardPage />} />
+        {/* <Route path="/admin" element={<AdminDashboardPage />} /> */}
         <Route
           path="/*" // Catch all routes for authenticated users
           element={

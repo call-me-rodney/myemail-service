@@ -13,10 +13,29 @@ export interface CreateUserDTO {
 // Auth response - both login and register return the same format
 export interface AuthResponse {
   userid: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'company admin' | 'super admin' | 'admin';
   accessToken: string;
   email: string;
   name: string; // Full name: fname lname
+  company: string;
+}
+
+export interface CompanyUser {
+  id: string;
+  fname: string;
+  lname: string;
+  dob: string;
+  timezone: string;
+  company: string;
+  role?: string;
+  is_verified?: boolean;
+  is_active?: boolean;
+}
+
+export interface VerificationRequestPayload {
+  userid: string;
+  verified_by: string;
+  role: 'user' | 'company admin';
 }
 
 export type EmailPriority = 'low' | 'normal' | 'high';

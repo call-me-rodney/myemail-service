@@ -67,7 +67,7 @@ export class UsersService {
   async fetchUnverified(company:string): Promise<string | string[]> {
     const users = await this.userModel.findAll({
       where: {
-        is_verfied : false,
+        is_verified : false,
         is_active : true,
         company: company
       }

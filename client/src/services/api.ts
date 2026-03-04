@@ -1,6 +1,7 @@
 // client/src/services/api.ts
 import axios from 'axios';
 import type { CreateEmailDto, AuthResponse, Email, CreateUserDTO } from '../types/interfaces';
+import type { CompanyUser, VerificationRequestPayload } from '../types/interfaces';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
@@ -125,6 +126,29 @@ export const updateMailingList = async (id: string, data: { name?: string; descr
 
 export const deleteMailingList = async (id: string): Promise<void> => {
   await api.delete(`/contacts/mailing-lists/${id}`);
+};
+
+export const fetchUnverifiedUsersByCompany = async (company: string): Promise<CompanyUser[]> => {
+  const response = await api.get<CompanyUser[] | string>(`/users/verify/${encodeURIComponent(company)}`);
+  if (typeof response.data === 'string') {
+    return [];
+  }
+  return response.data;
+};
+
+export const fetchUsers = async (): Promise<CompanyUser[]> => {
+  const response = await api.get<CompanyUser[]>('/users');
+  return response.data;
+};
+
+export const deactivateUser = async (id: string): Promise<string> => {
+  const response = await api.patch<string>(`/users/deactivate/${id}`);
+  return response.data;
+};
+
+export const verifyUser = async (payload: VerificationRequestPayload): Promise<string> => {
+  const response = await api.patch<string>('/users/verify', payload);
+  return response.data;
 };
 
 // Add other API calls as needed for contacts, analytics etc.

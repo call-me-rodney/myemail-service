@@ -7,7 +7,8 @@ import socketService from '../services/socket';
 
 interface AuthContextType {
   userid: string | null;
-  role: 'user' | 'admin' | null;
+  role: string | null;
+  company: string | null;
   accessToken: string | null;
   email: string | null;
   name: string | null;
@@ -22,7 +23,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userid, setUserid] = useState<string | null>(null);
-  const [role, setRole] = useState<'user' | 'admin' | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+  const [company, setCompany] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
@@ -33,11 +35,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('userid');
     localStorage.removeItem('role');
+    localStorage.removeItem('company');
     localStorage.removeItem('email');
     localStorage.removeItem('name');
     setAccessToken(null);
     setUserid(null);
     setRole(null);
+    setCompany(null);
     setEmail(null);
     setName(null);
     setIsAuthenticated(false);
@@ -49,13 +53,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const storedToken = localStorage.getItem('accessToken');
       const storedUserid = localStorage.getItem('userid');
       const storedRole = localStorage.getItem('role');
+      const storedCompany = localStorage.getItem('company');
       const storedEmail = localStorage.getItem('email');
       const storedName = localStorage.getItem('name');
       
       if (storedToken && storedUserid && storedRole) {
         setAccessToken(storedToken);
         setUserid(storedUserid);
-        setRole(storedRole as 'user' | 'admin');
+        setRole(storedRole);
+        if (storedCompany) setCompany(storedCompany);
         if (storedEmail) setEmail(storedEmail);
         if (storedName) setName(storedName);
         setIsAuthenticated(true);
@@ -73,11 +79,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('userid', data.userid);
     localStorage.setItem('role', data.role);
+    localStorage.setItem('company', data.company);
     localStorage.setItem('email', data.email);
     localStorage.setItem('name', data.name);
     setAccessToken(data.accessToken);
     setUserid(data.userid);
     setRole(data.role);
+    setCompany(data.company);
     setEmail(data.email);
     setName(data.name);
     setIsAuthenticated(true);
@@ -104,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <AuthContext.Provider value={{ userid, role, accessToken, email, name, updateName, login: loginUser, register: registerUser, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ userid, role, company, accessToken, email, name, updateName, login: loginUser, register: registerUser, logout, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );

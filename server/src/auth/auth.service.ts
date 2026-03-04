@@ -37,6 +37,7 @@ export class AuthService {
       accessToken: token,
       email: user.email,
       name: `${user.fname} ${user.lname}`,
+      company: user.company,
     } 
     return response;
   }
@@ -66,6 +67,7 @@ export class AuthService {
         accessToken: token,
         email: user.email,
         name: `${user.fname} ${user.lname}`,
+        company: user.company,
       }
       return response;
     } catch (error) {
