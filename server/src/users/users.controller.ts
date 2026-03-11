@@ -6,7 +6,7 @@ import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { roles } from './types/enum.types';
-import { VerificationRequest } from './types/int.types';
+import type { VerificationRequest } from './types/int.types';
 
 @Controller('users')
 @Roles([roles.companyadmin,roles.superadmin])
