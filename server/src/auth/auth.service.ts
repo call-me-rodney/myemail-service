@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 // import { ConfigService } from '@nestjs/config';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import type { LoginPayload, OTP } from './types/int.types';
+import type { LoginPayload } from './types/int.types';
 import type { ResponsePayload } from './types/int.types';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -15,31 +15,15 @@ export class AuthService {
     // private configService: ConfigService,
   ) {}
 
-  async register(createUserDto: CreateUserDto): Promise<ResponsePayload> {
-    // const saltRounds = this.configService.get<number>('BCRYPT_SALT_ROUNDS') || 10;
-    const saltRounds = 10;
-    const hashed = await bcrypt.hash(createUserDto.password, saltRounds);
-    const user = await this.usersService.create({
-      ...createUserDto,
-      password: hashed,
-    } as any);
+  async register(createUserDto: CreateUserDto): Promise< string > {
 
+    const user = await this.usersService.create(createUserDto);
+     
     if (!user) {
       throw new Error('User registration failed');
     }
-    const token = await this.generatetoken(user);
 
-    // initiate verification link here
-
-    const response: ResponsePayload = {
-      userid: user.id,
-      role: user.role,
-      accessToken: token,
-      email: user.email,
-      name: `${user.fname} ${user.lname}`,
-      company: user.company,
-    } 
-    return response;
+    return "User created successfully";
   }
 
   async login(loginPayload: LoginPayload): Promise<ResponsePayload> {
@@ -57,6 +41,7 @@ export class AuthService {
       if (user.is_active === false){
         throw new UnauthorizedException("This user has been suspended due to failure to verify their account. Please contact your admin for further inquiries")
       }
+      
       await this.usersService.update(user.id, { lastLogin: new Date() } as any);
 
       // generate and send access token to verified user
@@ -86,25 +71,5 @@ export class AuthService {
     };
     const accessToken = await this.jwtService.signAsync(payload);
     return accessToken;
-  }
-
-  async generateOTP(id: string): Promise<string> {
-    /* 
-    - generate a one time password that will expire after a day
-    - save that password using the cache module for verification
-    - send verification code via platform of choice
-    */
-    return "OTP successfully generated"
-  }
-
-  async verifyOTP(id: string, otp: OTP): Promise<string> {
-    /*  
-    - fetch the otp for the provided user id if it exists
-    - compare OTP codes
-    - set is_verified to true if verification successful
-    - enable 5 more tries if not successful
-    - beyond this, account will be automatically deactivated
-    */
-    return "Account verification successful"
   }
 }

@@ -4,6 +4,7 @@ import { User } from './models/user.model';
 import { VerificationRequest } from './types/int.types';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -88,10 +89,12 @@ export class UsersService {
     }
 
     const user = userObj.toJSON();
+    const dummyPass = `${user.fname}${user.lname}@${user.company}`;
+    const hashedDummyPass = await bcrypt.hash(dummyPass , 10);
     await userObj.update({
       role: verificationRequest.role,
       email: `${user.fname}.${user.lname}@brevomail.com`,
-      password: `${user.fname}${user.lname}@${user.company}`,
+      password: hashedDummyPass,
       is_verified: true,
       verified_at: new Date(),
       updated_at: new Date(),
