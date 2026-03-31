@@ -5,10 +5,14 @@ import { VerificationRequest } from './types/int.types';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
+import { SmsService } from 'src/common/sms/sms.service';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User) private userModel: typeof User){}
+  constructor(
+    @InjectModel(User) private userModel: typeof User,
+    private readonly smsService: SmsService,
+  ){}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const created = await this.userModel.create(createUserDto as any);
@@ -89,11 +93,12 @@ export class UsersService {
     }
 
     const user = userObj.toJSON();
-    const dummyPass = `${user.fname}${user.lname}@${user.company}`;
+    const dummyPass = `${(user.fname).toLowerCase()}${(user.lname).toLowerCase()}@${user.company}`;
+    const newEmail = `${(user.fname).toLowerCase()}.${(user.lname).toLowerCase()}@brevomail.com`;
     const hashedDummyPass = await bcrypt.hash(dummyPass , 10);
     await userObj.update({
       role: verificationRequest.role,
-      email: `${user.fname}.${user.lname}@brevomail.com`,
+      email: newEmail,
       password: hashedDummyPass,
       is_verified: true,
       verified_at: new Date(),
@@ -101,22 +106,26 @@ export class UsersService {
       verified_by: verificationRequest.verified_by
     });
 
-    // send twilio SMS here
+    const loginUrl: string = `https://${process.env.LOCALHOST}/login`;
+    const message: string = `Congratulations, your request to join the mailing team at ${user.company} has been approved. Please log into your portal at ${loginUrl} with the following credentials: email: ${newEmail}, password: ${dummyPass}. Be sure to change your login password as soon as possible.`;
+    await this.smsService.send(user.phone, message);
 
     return `The user with ID: ${user.id} has been verified and activated`;
   }
 
   async deactivate(id: string): Promise<string> {
-    const user = await this.userModel.findByPk(id);
+    const userObj = await this.userModel.findByPk(id);
 
-    if (!user) {
+    if (!userObj) {
       throw new NotFoundException('User not found');
     }
 
-    await user.update({ is_active: false });
+    await userObj.update({ is_active: false });
+    const user = userObj.toJSON();
 
-    // send an SMS notifying the user of registration denia or removal from duty
-  
+    const message: string = `Dear user, we regret to inform you that your account or registration request has been rejected and you will no longer be able to send mails on behalf of ${user.company}. We wish you the best in your endeavours.`;
+    await this.smsService.send(user.phone, message);
+
     return `The user with ID: ${user.id} has been deactivated`;
   }
 

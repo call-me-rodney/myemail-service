@@ -11,83 +11,72 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { roles } from 'src/users/types/enum.types';
 
 @Controller('contacts')
+@Roles([roles.companyadmin,roles.superadmin])
 @UseGuards(AuthGuard, RolesGuard)
 export class ContactsController {
   constructor(private readonly contactsService: ContactsService) {}
 
   @Post()
-  @Roles([roles.user, roles.admin])
   create(@Req() req: Request, @Body() createContactDto: CreateContactDto) {
     const userId = (req as any).user?.sub || (req as any).user?.id;
     return this.contactsService.create({ ...createContactDto, user_id: userId });
   }
 
   @Get()
-  @Roles([roles.admin])
   findAll() {
     return this.contactsService.findAll();
   }
 
   @Get('user')
-  @Roles([roles.user, roles.admin])
   findMultiple(@Req() req: Request) {
     const userId = (req as any).user?.sub || (req as any).user?.id;
     return this.contactsService.findMultiple(userId);
   }
 
   @Get('single/:id')
-  @Roles([roles.user, roles.admin])
   findOne(@Param('id') id: string) {
     return this.contactsService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles([roles.user, roles.admin])
   update(@Param('id') id: string, @Body() updateContactDto: UpdateContactDto) {
     return this.contactsService.update(id, updateContactDto);
   }
 
   @Delete(':id')
-  @Roles([roles.admin])
   remove(@Param('id') id: string) {
     return this.contactsService.remove(id);
   }
 
   // Mailing List routes
   @Post('mailing-lists')
-  @Roles([roles.user, roles.admin])
   createMailingList(@Req() req: Request, @Body() createMailingListDto: CreateMailingListDto) {
     const userId = (req as any).user?.sub || (req as any).user?.id;
     return this.contactsService.createMailingList({ ...createMailingListDto, user_id: userId });
   }
 
   @Get('mailing-lists')
-  @Roles([roles.admin])
   findAllMailingLists() {
     return this.contactsService.findAllMailingLists();
   }
 
   @Get('mailing-lists/user')
-  @Roles([roles.user, roles.admin])
   findUserMailingLists(@Req() req: Request) {
     const userId = (req as any).user?.sub || (req as any).user?.id;
     return this.contactsService.findUserMailingLists(userId);
   }
 
   @Get('mailing-lists/:id')
-  @Roles([roles.user, roles.admin])
   findOneMailingList(@Param('id') id: string) {
     return this.contactsService.findOneMailingList(id);
   }
 
   @Patch('mailing-lists/:id')
-  @Roles([roles.user, roles.admin])
   updateMailingList(@Param('id') id: string, @Body() updateMailingListDto: UpdateMailingListDto) {
     return this.contactsService.updateMailingList(id, updateMailingListDto);
   }
 
   @Delete('mailing-lists/:id')
-  @Roles([roles.user, roles.admin])
   removeMailingList(@Param('id') id: string) {
     return this.contactsService.removeMailingList(id);
   }
