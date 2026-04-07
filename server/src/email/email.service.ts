@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-// import { ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { Sequelize } from 'sequelize-typescript';
 import { Op } from 'sequelize';
 import { Email } from './models/email.model';
@@ -23,7 +23,7 @@ export class EmailService {
     @InjectModel(Conversations) private conversationsModel: typeof Conversations,
     private sequelize: Sequelize,
     private usersService: UsersService,
-    // private configService: ConfigService,
+    private configService: ConfigService,
   ) {}
   private readonly logger = new Logger(EmailService.name);
 
@@ -368,8 +368,8 @@ export class EmailService {
     const send_time = new Date();
     const email = emailPayload.toJSON();
     emailjs.init({
-      publicKey:'zQXdkPnjzkxtZJ8rW',
-      privateKey:'YruEG3HwAbeEQIJBHVjay',
+      publicKey: this.configService.get<string>('emailjs.publickey'),
+      privateKey: this.configService.get<string>('emailjs.privatekey'),
     })
 
     const templateParams = {

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { JwtModule } from '@nestjs/jwt';
-// import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EmailModule } from './email/email.module';
@@ -10,60 +10,60 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { UsersModule } from './users/users.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { CompanyModule } from './company/company.module';
-// import * as path from 'path';
+import configuration from './common/config/configuration';
+
+const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
 
 @Module({
   imports: [
-    // ConfigModule.forRoot({ 
-    //   isGlobal: true,
-    //   envFilePath: path.resolve(process.cwd(),'dev.env'),
-    //   cache: true,
-    // }),
-    // ConfigModule.forRoot({ for production environment
-    //   isGlobal: true,
-    //   ignoreEnvFile: true,
-    // }),
-    // JwtModule.registerAsync({
-    //   imports: [ConfigModule],
-    //   useFactory: (configService: ConfigService) => ({
-    //     global: true,
-    //     secret: configService.get<string>('JWT_SECRET') || 'default',
-    //     signOptions: { expiresIn: configService.get<any>('JWT_EXPIRATION') || '1d'},
-    //   }),
-    //   inject: [ConfigService],
-    // }),
-    JwtModule.register({
+    ConfigModule.forRoot({
+      isGlobal: true,
+      // Dev reads from .env file; demo/prod rely on platform-injected env vars
+      envFilePath: isDev ? '.env' : undefined,
+      ignoreEnvFile: !isDev,
+      load: [configuration],
+      cache: true,
+    }),
+    JwtModule.registerAsync({
       global: true,
-      secret: 'default',
-      signOptions: { expiresIn: '1d'},
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('jwt.secret'),
+        signOptions: { expiresIn: (configService.get<string>('jwt.expiration') || '24h') as any },
+      }),
+      inject: [ConfigService],
     }),
-    SequelizeModule.forRoot({
-      dialect: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'postgres',
-      database: 'myemail_service',
-      models: [],
-      autoLoadModels: true,
-      synchronize: true,
-      logging: false,
+    SequelizeModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => {
+        const env = configService.get<string>('environment');
+        console.log(`The environment is ${env}`)
+        const base = {
+          dialect: 'postgres' as const,
+          models: [],
+          autoLoadModels: true,
+          synchronize: true,
+          logging: false,
+        };
+
+        if (env === 'production') {
+          return {
+            ...base,
+            url: configService.get<string>('database.url'),
+          };
+        }
+
+        return {
+          ...base,
+          host: configService.get<string>('database.host'),
+          port: configService.get<number>('database.port'),
+          username: configService.get<string>('database.username'),
+          password: configService.get<string>('database.password'),
+          database: configService.get<string>('database.name'),
+        };
+      },
+      inject: [ConfigService],
     }),
-    // SequelizeModule.forRootAsync({
-    //   imports: [ConfigModule],
-    //   useFactory: (configService: ConfigService) => ({
-    //     dialect: configService.get('DATABASE_DIALECT'),
-    //     host: configService.get('DATABASE_HOST'),
-    //     port: configService.get('DATABASE_PORT'),
-    //     username: configService.get('DATABASE_USERNAME'),
-    //     password: configService.get('DATABASE_PASSWORD'),
-    //     database: configService.get('DATABASE_NAME'),
-    //     models: [],
-    //     autoLoadModels: true,
-    //     synchronize: true,
-    //   }),
-    //   inject: [ConfigService],
-    // }),
     EmailModule,
     AuthModule,
     UsersModule,

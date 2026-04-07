@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import { ConfigService } from '@nestjs/config';
 import { User } from './models/user.model';
 import { VerificationRequest } from './types/int.types';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -12,6 +13,7 @@ export class UsersService {
   constructor(
     @InjectModel(User) private userModel: typeof User,
     private readonly smsService: SmsService,
+    private readonly configService: ConfigService,
   ){}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -106,7 +108,7 @@ export class UsersService {
       verified_by: verificationRequest.verified_by
     });
 
-    const loginUrl: string = `https://${process.env.LOCALHOST}/login`;
+    const loginUrl: string = `https://${this.configService.get<string>('app.host')}/login`;
     const message: string = `Congratulations, your request to join the mailing team at ${user.company} has been approved. Please log into your portal at ${loginUrl} with the following credentials: email: ${newEmail}, password: ${dummyPass}. Be sure to change your login password as soon as possible.`;
     await this.smsService.send(user.phone, message);
 

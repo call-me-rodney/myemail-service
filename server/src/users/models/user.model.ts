@@ -9,77 +9,77 @@ export class User extends Model {
     declare id: string;
 
     @Column
-    fname: string;
+    declare fname: string;
 
     @Column
-    lname: string;
+    declare lname: string;
 
-    @Column
     @AllowNull
-    role: roles;
+    @Column
+    declare role: string;
 
     @Unique
-    @Column
     @AllowNull
-    email: string;
+    @Column
+    declare email: string;
 
     @Column
-    dob: Date;
+    declare dob: Date;
 
-    @Column
     @AllowNull
-    password: string;
+    @Column
+    declare password: string;
 
     @Column
-    phone: string;
+    declare phone: string;
 
     @Column
-    timezone: string;
+    declare timezone: string;
 
     @ForeignKey(()=> Company)
     @Column
-    company: string;
-
-    @Column({defaultValue: sendLimits.user})
+    declare company: string;
+    
     @AllowNull
-    dailySendLimit: sendLimits;
+    @Column({defaultValue: sendLimits.user})
+    declare dailySendLimit: sendLimits;
 
     @CreatedAt
     @Column({defaultValue: new Date()})
-    created_at: Date;
+    declare created_at: Date;
 
     @UpdatedAt
     @AllowNull
     @Column
-    updated_at: Date;
+    declare updated_at: Date;
 
     @DeletedAt
     @AllowNull
     @Column
-    deleted_at: Date;
+    declare deleted_at: Date;
 
     @Column({defaultValue: new Date()})
-    lastLogin: Date;
+    declare lastLogin: Date;
 
     @Column({defaultValue: false})
-    is_verified: boolean;
+    declare is_verified: boolean;
 
     @Column({defaultValue: true})
-    is_active: boolean;
+    declare is_active: boolean;
 
     @AllowNull
     @Column
-    verified_at: Date;
+    declare verified_at: Date;
 
     @AllowNull
-    @Column
     @ForeignKey(()=> User)
-    verified_by: string;
+    @Column
+    declare verified_by: string;
 
     // associations
     @HasOne(()=> User)
-    verifier: User;
+    declare verifier: User;
 
     @BelongsTo(()=> Company)
-    companyDetails: Company;
+    declare companyDetails: Company;
 }
