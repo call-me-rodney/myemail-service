@@ -8,7 +8,7 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { roles } from 'src/users/types/enum.types';
 
 @Controller('analytics')
-@Roles([roles.admin])
+@Roles([roles.superadmin])
 @UseGuards(AuthGuard, RolesGuard)
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}

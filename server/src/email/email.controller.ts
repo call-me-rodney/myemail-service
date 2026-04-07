@@ -15,14 +15,14 @@ export class EmailController {
   constructor(private readonly emailService: EmailService) {}
 
   @Post()
-  @Roles([roles.user, roles.admin])
+  @Roles([roles.user, roles.companyadmin])
   create(@Req() req: Request, @Body() createEmailDto: CreateEmailDto) {
     const userId = (req as any).user?.sub || (req as any).user?.id;
     return this.emailService.create({ ...createEmailDto, user_id: userId });
   }
 
   @Post('bulk')
-  @Roles([roles.user, roles.admin])
+  @Roles([roles.user, roles.companyadmin])
   sendBulkEmail(@Req() req: Request, @Body() body: { emailPayload: CreateEmailDto; mailingList: string[] }) {
     const userId = (req as any).user?.sub || (req as any).user?.id;
     return this.emailService.handleBulkMail(
@@ -32,27 +32,27 @@ export class EmailController {
   }
 
   @Get()
-  @Roles([roles.admin])
+  @Roles([roles.companyadmin])
   findAll() {
     return this.emailService.findAll();
   }
 
   @Get('user')
-  @Roles([roles.user, roles.admin])
+  @Roles([roles.user, roles.companyadmin])
   findMultiple(@Req() req: Request) {
     const userId = (req as any).user?.sub || (req as any).user?.id;
     return this.emailService.findMultiple(userId);
   }
 
   @Get('single/:id')
-  @Roles([roles.user, roles.admin])
+  @Roles([roles.user, roles.companyadmin])
   findOne(@Param('id') id: string) {
     return this.emailService.findOne(id);
   }
 
   // Update email - mainly for updating status to 'pending' to trigger sending
   @Patch(':id')
-  @Roles([roles.user, roles.admin])
+  @Roles([roles.user, roles.companyadmin])
   async update(@Param('id') id: string, @Body() updateEmailDto: UpdateEmailDto) {
     await this.emailService.update(id, updateEmailDto);
 
@@ -65,7 +65,7 @@ export class EmailController {
   }
 
   @Delete(':id')
-  @Roles([roles.admin])
+  @Roles([roles.companyadmin])
   remove(@Param('id') id: string) {
     return this.emailService.remove(id);
   }
