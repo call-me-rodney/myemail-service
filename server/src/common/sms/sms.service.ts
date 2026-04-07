@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as twilio from 'twilio';
+import { ConfigService } from '@nestjs/config';
+import twilio from 'twilio';
 
 @Injectable()
 export class SmsService {
@@ -7,12 +8,12 @@ export class SmsService {
   private readonly from: string;
   private readonly logger = new Logger(SmsService.name);
 
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
     this.client = twilio(
-      process.env.TWILIO_ACCOUNT_SID,
-      process.env.TWILIO_AUTH_TOKEN,
+      this.configService.get<string>('twilio.accountSid'),
+      this.configService.get<string>('twilio.authToken'),
     );
-    this.from = process.env.TWILIO_FROM_NUMBER || '';
+    this.from = this.configService.get<string>('twilio.fromNumber') || '';
   }
 
   async send(to: string, body: string): Promise<void> {
