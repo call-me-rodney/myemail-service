@@ -1,21 +1,24 @@
-import { IsDateString, IsString } from "@nestjs/class-validator";
+import { IsDateString, IsEmail, IsEnum, isString, IsString } from "@nestjs/class-validator";
 
 export class CreateUserDto {
     @IsString()
-    fname: string;
+    declare fname: string;
 
     @IsString()
-    lname: string;
-    
+    declare lname: string;
+
+    @IsEmail()
+    declare email: string;
+
+    @IsString()
+    declare password: string;
+
+    @IsString()
+    declare company: string;
+
     @IsDateString()
-    dob: Date;
+    declare dob: Date;
 
     @IsString()
-    company: string;
-
-    @IsString()
-    phone: string;
-
-    @IsString()
-    timezone: string;
+    declare timezone: string;
 }

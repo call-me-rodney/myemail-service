@@ -14,52 +14,48 @@ import type { VerificationRequest } from './types/int.types';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  // Create an active user that hasn't been verified yet
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
+  /*
+  This should handle fetching all users,
+  but also handle fetching users based on query parameters such as company, role, verification status, etc.
+  */
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Query() query: any) {
+    return this.usersService.findAll(query);
   }
 
-  //implement filtering logic later
-  // @Get('filter')
-  // filter(@Query() query: any) {
-  //   return `This action filters users`;
-  // }
-
+  // Retrieving a specific user
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
 
+  // for updating user data
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
 
-  //implement company specific fetching
-  @Get('verify/:company')
-  fetchUnverified(@Param('company') company: string){
-    return this.usersService.fetchUnverified(company);
-  }
-
+  // Sets is_verified to true, giving a user access to company assets
+  // This also spares a user from being rendered inactive.
   @Patch('verify')
   setVerified(@Body() verificationRequest: VerificationRequest) {
     return this.usersService.setVerified(verificationRequest);
   }
 
-  /*endpoint used to deactivate a user account if they haven't verified their accounts in
-    a fortnight after signing up or the lastlogin date is over 3 months. In which case an admin has to 
-    reactivate or delete the account
-  */ 
+  // Company or sys admins can deactivate a user, which sets is_active to false and deactivated_at to the current timestamp. 
+  // This allows for soft deletion and potential reactivation in the future.
   @Patch('/deactivate/:id')
   deactivate(@Param('id') id: string) {
     return this.usersService.deactivate(id);
   }
 
+  // sys admin permanantly deletes a database record
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);

@@ -4,8 +4,3 @@ export enum roles {
     superadmin = "super admin",
 }
 
-export enum sendLimits {
-    user = 50,
-    admin = 500,
-    superadmin = 1000,
-}
