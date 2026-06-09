@@ -18,29 +18,32 @@ export class Company extends Model {
 	declare id: string;
 
 	@Column
-	name: string;
+	declare name: string;
 
 	@Unique
 	@Column
-	email: string;
+	declare email: string;
 
 	@Column
-	address: string;
+	declare address: string;
 
 	@Column
-	service: string;
+	declare service: string;
+
+	@Column({defaultValue: true})
+	declare is_active: boolean;
 
 	@CreatedAt
 	@Column({ defaultValue: new Date() })
-	created_at: Date;
+	declare created_at: Date;
 
 	@UpdatedAt
 	@AllowNull
 	@Column
-	updated_at: Date;
+	declare last_updated: Date;
 
 	@DeletedAt
 	@AllowNull
 	@Column
-	deleted_at: Date;
+	declare deactivated_at: Date;
 }

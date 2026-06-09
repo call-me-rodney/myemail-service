@@ -15,66 +15,66 @@ export class Email extends Model {
   //foreign key to users table
   @ForeignKey(() => User)
   @Column({type: DataType.UUID})
-  user_id: string;
+  declare user_id: string;
 
   @Column
-  from_email: string;
+  declare from_email: string;
 
   @Column
-  from_name: string;
+  declare to_email: string;
 
   @Column
-  to_email: string;
-
-  @Column
-  subject: string;
+  declare subject: string;
 
   //foreign key to conversations table
   @ForeignKey(() => Conversations)
   @Column({type: DataType.UUID})
-  conversation_id: string;
+  declare conversation_id: string;
 
   @Column
-  textcontent: string;
+  declare textcontent: string;
 
   @Column({defaultValue: "low"})
-  priority: Priority;
+  declare priority: Priority;
 
   @Column({defaultValue: "draft"})
-  status: Status;
+  declare status: Status;
 
   @CreatedAt
   @Column({defaultValue: new Date()})
-  created_at: Date;
+  declare created_at: Date;
 
   @UpdatedAt
   @AllowNull
   @Column
-  updated_at: Date;
+  declare last_updated: Date;
+
+  @Column({defaultValue: true})
+  declare is_active: boolean;
 
   @DeletedAt
   @AllowNull
   @Column
-  deleted_at: Date;
+  declare deactivated_at: Date;
 
   @AllowNull
   @Column
-  sent_at: Date;
+  declare sent_at: Date;
 
   @AllowNull
   @Column
-  scheduled_for: Date;
+  declare scheduled_for: Date;
 
   //associations
   @BelongsTo(() => User)
-  user: User;
+  declare user: User;
 
   @BelongsTo(() => Conversations)
-  conversation: Conversations;
+  declare conversation: Conversations;
 
   @HasMany(() => Recipients)
-  recipients: Recipients[];
+  declare recipients: Recipients[];
 
   @HasMany(() => Attachments)
-  attachments: Attachments[];
+  declare attachments: Attachments[];
 }
