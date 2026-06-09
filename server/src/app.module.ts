@@ -37,7 +37,6 @@ const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
         const env = configService.get<string>('environment');
-        console.log(`The environment is ${env}`)
         const base = {
           dialect: 'postgres' as const,
           models: [],
