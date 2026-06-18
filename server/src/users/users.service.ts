@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { ConfigService } from '@nestjs/config';
 import { User } from './models/user.model';
@@ -6,15 +6,18 @@ import { VerificationRequest } from './types/int.types';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
-// import { SmsService } from 'src/common/sms/sms.service';
+import { EmailNotificationService } from 'src/common/providers/emailNotification.service';
+import { NotifyParams } from 'src/common/types/int.types';
+import emailjs, { EmailJSResponseStatus } from '@emailjs/nodejs';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User) private userModel: typeof User,
-    // private readonly smsService: SmsService,
+    private readonly emailNotificationService: EmailNotificationService,
     private readonly configService: ConfigService,
   ){}
+  private readonly logger = new Logger(UsersService.name);
 
   async create(createUserDto: CreateUserDto): Promise<string> {
     createUserDto.password = await bcrypt.hash(createUserDto.password, 10);
@@ -76,24 +79,7 @@ export class UsersService {
     return `The user with ID: ${user.id} has been updated`;
   }
 
-  // helper function for filtering out unverified users
-  // async fetchUnverified(company:string): Promise<string | string[]> {
-  //   const users = await this.userModel.findAll({
-  //     where: {
-  //       is_verified : false,
-  //       is_active : true,
-  //       company: company
-  //     }
-  //   });
-
-  //   if (!users){
-  //     return "There are no unverified active users at the moment"
-  //   }
-
-  //   return users.map(user => user.toJSON());
-  // }
-
-  async setVerified(verificationRequest: VerificationRequest): Promise<string> {
+  async setVerified(verificationRequest: VerificationRequest): Promise<string | void> {
     const userObj = await this.userModel.findByPk(verificationRequest.userid);
 
     if (!userObj) {
@@ -110,10 +96,20 @@ export class UsersService {
       verified_by: verificationRequest.verified_by
     });
 
-    // send confirmation email instead
-    //await this.smsService.send(user.phone, message);
+    const notifyParams: NotifyParams = {
+      title: "MAILING RIGHTS ACCESS",
+      name: "info@mailservice.me", 
+      from_name: "info",
+      // insert frontend login page link below
+      message: `Congratulations, you have been granted access rights to manage campaign mails on behalf of ${user.company} . Use the email and password you created at registration through the following link: `,
+      to_email: user.email,
+      from_email: "info@mailservice.me",
+      serviceId: "service_x7sgsil",
+      templateId: "template_8w8ybsv"
+    }
 
-    return `The user with ID: ${user.id} has been verified and activated`;
+    // send confirmation email instead
+    await this.emailNotificationService.sendNotification(notifyParams);
   }
 
   async deactivate(id: string): Promise<string> {
@@ -126,7 +122,20 @@ export class UsersService {
     await userObj.update({ is_active: false });
     const user = userObj.toJSON();
 
-    // await this.smsService.send(user.phone, message);
+    const notifyParams:NotifyParams = {
+      title: "MAILING RIGHTS ACCESS",
+      name: "info@mailservice.me", 
+      from_name: "info",
+      // insert frontend login page link below
+      message: `This is to inform you that you have been denied access to send mails on behalf of ${user.company} . We apologize for any inconviniences caused`,
+      to_email: user.email,
+      from_email: "info@mailservice.me",
+      serviceId: "service_x7sgsil",
+      templateId: "template_8w8ybsv"
+    }
+
+    // send confirmation email instead
+    await this.emailNotificationService.sendNotification(notifyParams);
 
     return `The user with ID: ${user.id} has been deactivated`;
   }

@@ -3,12 +3,12 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { User } from './models/user.model';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
-import { SmsService } from 'src/common/sms/sms.service';
+import { EmailNotificationService } from 'src/common/providers/emailNotification.service';
 
 @Module({
   imports: [SequelizeModule.forFeature([User])],
   exports: [UsersService, SequelizeModule],
   controllers: [UsersController],
-  providers: [UsersService, SmsService],
+  providers: [UsersService, EmailNotificationService],
 })
 export class UsersModule {}
