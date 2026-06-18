@@ -19,7 +19,7 @@ export class SmsService {
   async send(to: string, body: string): Promise<void> {
     try {
       await this.client.messages.create({ from: this.from, to, body });
-    } catch (err) {
+    } catch (err: any) {
       this.logger.error(`SMS failed to ${to}: ${err.message}`);
     }
   }
