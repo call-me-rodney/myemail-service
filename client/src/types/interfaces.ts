@@ -1,12 +1,21 @@
 // client/src/types/interfaces.ts
 
-// User creation DTO for registration endpoint
+// Roles a user can request when self-registering. Super admin is granted
+// internally, never self-assigned at registration.
+export type RegisterableRole = 'user' | 'company admin';
+
+// User creation DTO for registration endpoint.
+// Matches the backend CreateUserDto: the user supplies their own email,
+// password and requested role; the account is created unverified and awaits
+// approval from a company admin.
 export interface CreateUserDTO {
   fname: string;
   lname: string;
+  email: string;
+  password: string;
+  role: RegisterableRole;
   dob: string;
   company: string;
-  phone: string;
   timezone: string;
 }
 

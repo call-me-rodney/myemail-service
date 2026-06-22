@@ -3,10 +3,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { TextField, Button, Typography, Container, Box, Paper, Link, MenuItem } from '@mui/material';
-import type { CreateUserDTO } from '../types/interfaces';
+import type { CreateUserDTO, RegisterableRole } from '../types/interfaces';
 import { fetchCompanies } from '../services/api';
 
 const COMPANY_CACHE_KEY = 'registration_companies_cache';
+
+const ROLE_OPTIONS: { value: RegisterableRole; label: string }[] = [
+  { value: 'user', label: 'User' },
+  { value: 'company admin', label: 'Company Admin' },
+];
 
 const COMMON_TIMEZONES = [
   'UTC',
@@ -51,9 +56,11 @@ const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState<CreateUserDTO>({
     fname: '',
     lname: '',
+    email: '',
+    password: '',
+    role: 'user',
     dob: '',
     company: '',
-    phone: '',
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
   });
   const [error, setError] = useState('');
@@ -192,13 +199,44 @@ const RegisterPage: React.FC = () => {
               margin="normal"
               required
               fullWidth
-              id="phone"
-              label="Phone Number"
-              name="phone"
-              autoComplete="tel"
-              value={formData.phone}
+              id="email"
+              label="Email Address"
+              name="email"
+              type="email"
+              autoComplete="email"
+              value={formData.email}
               onChange={handleChange}
             />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="password"
+              label="Password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              value={formData.password}
+              onChange={handleChange}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="role"
+              label="Role"
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              select
+              helperText="Access for this role is granted by your company admin"
+            >
+              {ROLE_OPTIONS.map((roleOption) => (
+                <MenuItem key={roleOption.value} value={roleOption.value}>
+                  {roleOption.label}
+                </MenuItem>
+              ))}
+            </TextField>
             <TextField
               margin="normal"
               required

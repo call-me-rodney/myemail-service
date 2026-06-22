@@ -34,16 +34,12 @@ export const login = async (credentials: { email: string; password: string }): P
   throw new Error('Login failed');
 };
 
-export const register = async (userData: CreateUserDTO): Promise<AuthResponse> => {
-  const response = await api.post<AuthResponse>('/auth/register', userData);
-  const data = response.data;
-  
-  if (data.accessToken) {
-    localStorage.setItem('accessToken', data.accessToken);
-    return data;
-  }
-  
-  throw new Error('Registration failed');
+// Registration does NOT authenticate the user. The account is created in an
+// unverified state and must be approved by a company admin before the user can
+// log in, so the backend returns a confirmation message rather than a token.
+export const register = async (userData: CreateUserDTO): Promise<string> => {
+  const response = await api.post<string>('/auth/register', userData);
+  return response.data;
 };
 
 export const fetchEmails = async (): Promise<Email[]> => {

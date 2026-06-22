@@ -97,10 +97,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     handleAuthResponse(data);
   }, [handleAuthResponse]);
 
+  // Registration creates an unverified account that awaits admin approval.
+  // The user is NOT logged in here — they sign in only after being verified.
   const registerUser = useCallback(async (userData: CreateUserDTO) => {
-    const data = await api.register(userData);
-    handleAuthResponse(data);
-  }, [handleAuthResponse]);
+    await api.register(userData);
+  }, []);
 
   const updateName = useCallback((nextName: string) => {
     const trimmed = nextName.trim();
