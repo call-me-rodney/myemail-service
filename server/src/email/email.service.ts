@@ -400,8 +400,8 @@ export class EmailService {
 
     // Initialize EmailJS
     emailjs.init({
-      publicKey: 'zQXdkPnjzkxtZJ8rW',
-      privateKey: 'YruEG3HwAbeEQIJBHVjay',
+      publicKey: this.configService.get<string>('emailjs.publickey'),
+      privateKey: this.configService.get<string>('emailjs.privatekey'),
     });
 
     const send_time = new Date();
@@ -410,11 +410,11 @@ export class EmailService {
     const sendPromises = mailingList.map(async (recipientEmail: string) => {
       const templateParams = {
         title: savedEmail.subject,
-        name: savedEmail.from_name,
+        name: "User",
         to_email: recipientEmail,
         time: send_time.toDateString(),
         message: savedEmail.textcontent,
-        from_name: savedEmail.from_name,
+        from_name: "Sender",
         from_email: savedEmail.from_email,
       };
 
