@@ -35,12 +35,6 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
-  // for updating user data
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(id, updateUserDto);
-  }
-
   // Sets is_verified to true, giving a user access to company assets
   // This also spares a user from being rendered inactive.
   @Patch('verify')
@@ -53,6 +47,12 @@ export class UsersController {
   @Patch('/deactivate/:id')
   deactivate(@Param('id') id: string) {
     return this.usersService.deactivate(id);
+  }
+
+  // for updating user data
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(id, updateUserDto);
   }
 
   // sys admin permanantly deletes a database record

@@ -38,16 +38,6 @@ export class ContactsController {
     return this.contactsService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateContactDto: UpdateContactDto) {
-    return this.contactsService.update(id, updateContactDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.contactsService.remove(id);
-  }
-
   // Mailing List routes
   @Post('mailing-lists')
   createMailingList(@Req() req: Request, @Body() createMailingListDto: CreateMailingListDto) {
@@ -79,5 +69,15 @@ export class ContactsController {
   @Delete('mailing-lists/:id')
   removeMailingList(@Param('id') id: string) {
     return this.contactsService.removeMailingList(id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateContactDto: UpdateContactDto) {
+    return this.contactsService.update(id, updateContactDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.contactsService.remove(id);
   }
 }
