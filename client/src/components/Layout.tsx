@@ -20,7 +20,6 @@ import {
 import {
   Menu as MenuIcon,
   Campaign as CampaignIcon,
-  ListAlt as ListAltIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
   Email as EmailIcon,
@@ -30,7 +29,7 @@ import { useNavigate } from 'react-router-dom';
 
 const drawerWidth = 240;
 
-export type DashboardSection = 'emails' | 'lists' | 'settings';
+export type DashboardSection = 'emails' | 'settings';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -66,7 +65,6 @@ const Layout: React.FC<LayoutProps> = ({ children, activeSection, onSectionChang
   const menuItems = useMemo(
     () => [
       { key: 'emails' as const, label: 'Emails', icon: <CampaignIcon /> },
-      { key: 'lists' as const, label: 'Mailing Lists', icon: <ListAltIcon /> },
       { key: 'settings' as const, label: 'Settings', icon: <SettingsIcon /> },
     ],
     [],

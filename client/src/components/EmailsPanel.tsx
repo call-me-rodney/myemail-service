@@ -24,7 +24,7 @@ import { useMailingLists } from '../hooks/useMailingLists';
 
 const EmailsPanel: React.FC = () => {
   const { email, name } = useAuth();
-  const { listOptions, addList, getListById, loading: listsLoading } = useMailingLists();
+  const { listOptions, getListById, loading: listsLoading } = useMailingLists();
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
 
   // Single send state
@@ -41,10 +41,6 @@ const EmailsPanel: React.FC = () => {
   const [bulkTextcontent, setBulkTextcontent] = useState('');
   const [bulkStatus, setBulkStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [bulkError, setBulkError] = useState<string | null>(null);
-
-  // Create list inline
-  const [newListName, setNewListName] = useState('');
-  const [newListEmails, setNewListEmails] = useState('');
 
   const selectedList = useMemo(() => (selectedListId ? getListById(selectedListId) : null), [selectedListId, getListById]);
 
@@ -101,18 +97,6 @@ const EmailsPanel: React.FC = () => {
       setSingleStatus('error');
       setSingleError('Failed to send email. Please try again.');
     }
-  };
-
-  const handleCreateList = async () => {
-    const emails = newListEmails
-      .split(',')
-      .map((value) => value.trim())
-      .filter((value) => value.length > 0);
-
-    if (!newListName.trim() || emails.length === 0) return;
-    await addList(newListName, emails);
-    setNewListName('');
-    setNewListEmails('');
   };
 
   const handleSendBulk = async () => {
@@ -249,10 +233,10 @@ const EmailsPanel: React.FC = () => {
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Typography variant="h6" fontWeight={600}>Bulk Send</Typography>
             <Typography variant="body2" color="text.secondary">
-              Select a mailing list or create a new one before sending.
+              Select a premade mailing list to send to. Mailing lists are managed by your company admin.
             </Typography>
             <Divider />
-            <FormControl fullWidth>
+            <FormControl fullWidth disabled={listOptions.length === 0}>
               <InputLabel id="mailing-list-select">Mailing List</InputLabel>
               <Select
                 labelId="mailing-list-select"
@@ -267,6 +251,11 @@ const EmailsPanel: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
+            {!listsLoading && listOptions.length === 0 && (
+              <Typography variant="body2" color="text.secondary">
+                No mailing lists are available yet. Ask your company admin to create one.
+              </Typography>
+            )}
             {selectedList && (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {selectedList.emails.slice(0, 6).map((emailAddress) => (
@@ -292,25 +281,6 @@ const EmailsPanel: React.FC = () => {
               multiline
               minRows={6}
             />
-
-            <Divider sx={{ my: 1 }} />
-            <Typography variant="subtitle1" fontWeight={600}>Create a new list</Typography>
-            <TextField
-              fullWidth
-              label="List name"
-              value={newListName}
-              onChange={(event) => setNewListName(event.target.value)}
-            />
-            <TextField
-              fullWidth
-              label="Emails (comma separated)"
-              value={newListEmails}
-              onChange={(event) => setNewListEmails(event.target.value)}
-              placeholder="jane@company.com, john@company.com"
-            />
-            <Button variant="outlined" onClick={handleCreateList} disabled={!newListName.trim() || !newListEmails.trim()}>
-              Add mailing list
-            </Button>
 
             {bulkError && (
               <Typography color="error" variant="body2">{bulkError}</Typography>

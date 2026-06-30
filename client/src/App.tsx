@@ -10,12 +10,21 @@ import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import SystemAdminDashboardPage from './pages/SystemAdminDashboardPage';
 
-// A private route component to protect authenticated routes
+// Gate for authenticated areas: unauthenticated users are sent to /login.
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
+// Gate for auth pages: already-authenticated users are bounced to their dashboard
+// so they can't re-enter the login/register flow.
+const PublicOnlyRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <Navigate to="/" replace /> : <>{children}</>;
+};
+
+// The dashboard a user can reach is determined solely by their role — there are
+// no role-specific URLs to navigate to, so a user cannot open another role's UI.
 const RoleBasedDashboard: React.FC = () => {
   const { role } = useAuth();
 
@@ -34,21 +43,33 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route
+          path="/login"
+          element={
+            <PublicOnlyRoute>
+              <LoginPage />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicOnlyRoute>
+              <RegisterPage />
+            </PublicOnlyRoute>
+          }
+        />
         <Route path="/register/success" element={<RegisterSuccessPage />} />
         <Route path="/register/failed" element={<RegisterFailedPage />} />
-        {/* <Route path="/admin" element={<AdminDashboardPage />} /> */}
+
+        {/* All authenticated areas. Role decides which dashboard renders. */}
         <Route
-          path="/*" // Catch all routes for authenticated users
+          path="/*"
           element={
             <PrivateRoute>
               <RoleBasedDashboard />
             </PrivateRoute>
           }
-          // element={
-          //   <DashboardPage />
-          // }
         />
       </Routes>
     </Router>
