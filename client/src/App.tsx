@@ -8,6 +8,7 @@ import RegisterSuccessPage from './pages/RegisterSuccessPage';
 import RegisterFailedPage from './pages/RegisterFailedPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import SystemAdminDashboardPage from './pages/SystemAdminDashboardPage';
 
 // A private route component to protect authenticated routes
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -18,7 +19,11 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 const RoleBasedDashboard: React.FC = () => {
   const { role } = useAuth();
 
-  if (role === 'admin' || role === 'company admin' || role === 'super admin') {
+  if (role === 'super admin') {
+    return <SystemAdminDashboardPage />;
+  }
+
+  if (role === 'admin' || role === 'company admin') {
     return <AdminDashboardPage />;
   }
 

@@ -65,6 +65,23 @@ export interface CompanyData {
   service?: string;
 }
 
+// Payload a system admin submits to onboard a company. Mirrors the backend
+// CreateCompanyDto (name, email, address, service) plus requesterEmail — the
+// address of the individual who requested the company, who will be emailed a
+// link to the registration page once the company is created.
+export interface CreateCompanyPayload {
+  name: string;
+  email: string;
+  address: string;
+  service: string;
+  requesterEmail: string;
+}
+
+export const createCompany = async (payload: CreateCompanyPayload): Promise<CompanyData> => {
+  const response = await api.post<CompanyData>('/company', payload);
+  return response.data;
+};
+
 export const fetchCompanies = async (): Promise<CompanyData[]> => {
   const response = await api.get('/company');
   const data = response.data;
